@@ -20,16 +20,16 @@
     "number": 2,
     "dimension": "good_day_anchor",
     "stem": "At the end of a great day...",
-    "a": "What stays with me is that I mattered to someone",
-    "b": "What stays with me is that I rose to the task",
+    "a": "What stays with me is that I rose to the task",
+    "b": "What stays with me is that I mattered to someone",
     "signal": {
       "construct": "relational significance vs performance/challenge as the day's emotional anchor",
-      "pole_a": "value lands in having mattered to another person",
-      "pole_b": "value lands in having met challenge or performed well",
-      "weak_raises_a": ["2", "9", "6"],
-      "weak_raises_b": ["3", "1", "8"],
-      "weak_lowers_a": ["3"],
-      "weak_lowers_b": ["2"],
+      "pole_a": "value lands in having met challenge or performed well",
+      "pole_b": "value lands in having mattered to another person",
+      "weak_raises_a": ["3", "1", "8"],
+      "weak_raises_b": ["2", "9", "6"],
+      "weak_lowers_a": ["2"],
+      "weak_lowers_b": ["3"],
       "note": "Use as a weak prior only. This is about where self-value lands after a good day, not simply helping vs achieving."
     }
   },
@@ -37,12 +37,12 @@
     "number": 3,
     "dimension": "hurt_response",
     "stem": "When I get hurt in a close relationship...",
-    "a": "I want time alone before I let them near it",
-    "b": "I want a response from them sooner rather than later",
+    "a": "I keep the hurt private even if it comes out sharp",
+    "b": "I want comfort or reassurance from them fairly quickly",
     "signal": {
       "construct": "contact-seeking vs private containment after relational hurt",
-      "pole_a": "hurt is contained first and opened later, if at all",
-      "pole_b": "hurt increases the wish for response, contact, or repair",
+      "pole_a": "hurt is contained privately, even if it leaks as sharpness",
+      "pole_b": "hurt increases the wish for comfort, contact, or repair",
       "weak_raises_a": ["5", "8", "9"],
       "weak_raises_b": ["2", "6", "4"],
       "weak_lowers_a": ["2"],
@@ -52,23 +52,6 @@
   },
   {
     "number": 4,
-    "dimension": "conflict_entry",
-    "stem": "When something feels off in a close relationship...",
-    "a": "I wait until I know exactly what I mean",
-    "b": "I bring it up while the heat is still there",
-    "signal": {
-      "construct": "entering conflict during activation vs after private clarification",
-      "pole_a": "wants internal clarity before engagement",
-      "pole_b": "moves into repair or confrontation while the issue is still hot",
-      "weak_raises_a": ["5", "9", "1"],
-      "weak_raises_b": ["8", "2", "6"],
-      "weak_lowers_a": ["8"],
-      "weak_lowers_b": ["5"],
-      "note": "Use as a weak prior only. This is about timing of engagement, not maturity, courage, or communication skill."
-    }
-  },
-  {
-    "number": 5,
     "dimension": "pressure_stance",
     "stem": "When tension rises between people I care about...",
     "a": "I ease back and try not to get pulled into it",
@@ -85,19 +68,19 @@
     }
   },
   {
-    "number": 6,
+    "number": 5,
     "dimension": "anger_awareness",
     "stem": "When someone crosses a line with me...",
-    "a": "I understand I was angry after the moment passes",
-    "b": "I feel the anger right away before I think",
+    "a": "I feel the anger right away before I think",
+    "b": "I understand I was angry after the moment passes",
     "signal": {
       "construct": "immediate vs delayed access to anger",
-      "pole_a": "anger is recognized later after distance or reinterpretation",
-      "pole_b": "anger is conscious quickly and felt in the body",
-      "weak_raises_a": ["9"],
-      "weak_raises_b": ["8", "1"],
-      "weak_lowers_a": ["8"],
-      "weak_lowers_b": [],
+      "pole_a": "anger is conscious quickly and felt in the body",
+      "pole_b": "anger is recognized later after distance or reinterpretation",
+      "weak_raises_a": ["8", "1"],
+      "weak_raises_b": ["9"],
+      "weak_lowers_a": [],
+      "weak_lowers_b": ["8"],
       "note": "Use as a weak prior only. This is mainly about access to anger, not direct type assignment."
     }
   }

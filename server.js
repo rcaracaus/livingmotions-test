@@ -57,6 +57,18 @@ db.exec(`
     created_at TEXT DEFAULT (datetime('now')),
     FOREIGN KEY (session_id) REFERENCES sessions(id)
   );
+
+  CREATE TABLE IF NOT EXISTS reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT NOT NULL,
+    question_number INTEGER NOT NULL,
+    rating INTEGER,
+    complaint TEXT,
+    option_a TEXT,
+    option_b TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (session_id) REFERENCES sessions(id)
+  );
 `);
 
 const insertSession = db.prepare(`INSERT INTO sessions (id, name) VALUES (?, ?)`);
@@ -79,6 +91,9 @@ const updateQuestionAnswer = db.prepare(`
 `);
 const updateQuestionRating = db.prepare(`
   UPDATE questions SET rating = ? WHERE session_id = ? AND question_number = ?
+`);
+const insertReport = db.prepare(`
+  INSERT INTO reports (session_id, question_number, rating, complaint, option_a, option_b) VALUES (?, ?, ?, ?, ?, ?)
 `);
 const insertMessage = db.prepare(`
   INSERT INTO messages (session_id, role, content) VALUES (?, ?, ?)
@@ -171,13 +186,13 @@ If your behavioral readings contradict the expected profile on 2+ dimensions, ST
 
 ## Strategy
 
-The first 6 questions are pre-collected calibration questions covering all behavioral dimensions. You will receive all 6 answers at once as your first message. Your job begins at question 7.
+The first 5 questions are pre-collected calibration questions covering all behavioral dimensions. You will receive all 6 answers at once as your first message. Your job begins at question 7.
 
-- **Your first response (Q7)**: Analyze the 6 calibration answers as a batch. Set initial behavioral signal readings and type probabilities. **HARD RULE: keep at least 3 types above 10% probability. Do not over-index on any single answer.** Then ask your first adaptive question.
-- **Questions 7-12**: Narrow the type. Target the 2-3 most likely types with precision questions. Continue gathering behavioral signals — every question should still inform at least one signal dimension. **CHECK: if your top 2 types form a lookalike pair (see table above) begin disambiguation NOW.** Keep at least 2 viable alternatives above 5% until Q10.
+- **Your first response (Q6)**: Analyze the 5 calibration answers as a batch. Set initial behavioral signal readings and type probabilities. **HARD RULE: keep at least 3 types above 10% probability. Do not over-index on any single answer.** Then ask your first adaptive question.
+- **Questions 6-12**: Narrow the type. Target the 2-3 most likely types with precision questions. Continue gathering behavioral signals — every question should still inform at least one signal dimension. **CHECK: if your top 2 types form a lookalike pair (see table above) begin disambiguation NOW.** Keep at least 2 viable alternatives above 5% until Q10.
 - **Questions 13-16**: Lock wing + fill behavioral gaps. If a signal is still ambiguous ask a question that resolves it while also confirming the wing. **REQUIRED: run the behavioral contradiction check before proceeding to done.**
 - **Questions 17-20**: Only if needed. Mop up any remaining low-confidence scores.
-- **Stop when**: core type confidence >= 90 AND wing confidence >= 70 AND at least 5 of 6 behavioral signals have clear readings AND behavioral contradiction check passes AND any lookalike pair has been disambiguated. Maximum 20 questions total (including the 6 calibration questions).
+- **Stop when**: core type confidence >= 90 AND wing confidence >= 70 AND at least 5 of 6 behavioral signals have clear readings AND behavioral contradiction check passes AND any lookalike pair has been disambiguated. Maximum 20 questions total (including the 5 calibration questions).
 
 ## Question design rules
 
@@ -334,11 +349,18 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // ── Rate question ──
-  if (req.method === 'POST' && req.url === '/api/questions/rate') {
+  // ── Report question ──
+  if (req.method === 'POST' && req.url === '/api/questions/report') {
     try {
       const data = await readBody(req);
-      updateQuestionRating.run(data.rating, data.session_id, data.question_number);
+      insertReport.run(
+        data.session_id, data.question_number,
+        data.rating || null, data.complaint || '',
+        data.option_a || '', data.option_b || ''
+      );
+      if (data.rating) {
+        updateQuestionRating.run(data.rating, data.session_id, data.question_number);
+      }
       json(res, 200, { ok: true });
     } catch (err) {
       json(res, 400, { error: err.message });

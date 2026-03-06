@@ -151,14 +151,48 @@
   }
   .informs-row { text-align: center; margin-bottom: 1rem; }
 
-  /* Star rating */
-  .star-row { text-align: center; margin-top: 1rem; }
-  .star-row .star {
+  /* Report button */
+  .report-row { text-align: center; margin-top: 1rem; }
+  .report-btn {
+    background: none; border: none; color: #333; cursor: pointer; font-size: 0.75rem;
+    display: inline-flex; align-items: center; gap: 4px; transition: color 0.15s; padding: 4px 8px;
+  }
+  .report-btn:hover { color: #ef4444; }
+  .report-btn svg { width: 14px; height: 14px; }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center;
+    z-index: 100; animation: fadeIn 0.15s ease;
+  }
+  .modal {
+    background: #111; border: 1px solid #222; border-radius: 12px; padding: 1.5rem;
+    width: 90%; max-width: 400px;
+  }
+  .modal h3 { font-size: 0.9rem; color: #ccc; margin-bottom: 1rem; font-weight: 400; }
+  .modal .star-row { text-align: left; margin-bottom: 1rem; }
+  .modal .star-row label { font-size: 0.75rem; color: #555; display: block; margin-bottom: 6px; }
+  .modal .star {
     font-size: 1.4rem; cursor: pointer; color: #333; transition: color 0.15s; padding: 0 2px;
     background: none; border: none;
   }
-  .star-row .star:hover, .star-row .star.on { color: #f59e0b; }
-  .star-row .star-label { font-size: 0.65rem; color: #444; display: block; margin-top: 4px; }
+  .modal .star:hover, .modal .star.on { color: #f59e0b; }
+  .modal textarea {
+    width: 100%; background: #0a0a0a; border: 1px solid #222; color: #ccc; padding: 8px 10px;
+    border-radius: 6px; font-size: 0.85rem; font-family: inherit; resize: vertical; min-height: 60px;
+    margin-bottom: 1rem;
+  }
+  .modal textarea:focus { outline: none; border-color: #4a9eff; }
+  .modal textarea::placeholder { color: #444; }
+  .modal .modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
+  .modal .modal-actions button {
+    padding: 6px 16px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; border: none;
+  }
+  .modal .btn-cancel { background: #222; color: #888; }
+  .modal .btn-cancel:hover { background: #2a2a2a; }
+  .modal .btn-submit { background: #4a9eff; color: #fff; }
+  .modal .btn-submit:hover { background: #3a8eef; }
 </style>
 </head>
 <body>
@@ -194,6 +228,57 @@ function log(msg) {
   d.classList.add('show');
   d.textContent += msg + '\n';
   d.scrollTop = d.scrollHeight;
+}
+
+function showReportModal(sessionId, qNum, optA, optB) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  const stars = [1,2,3,4,5].map(n => `<button class="star" data-star="${n}">&#9733;</button>`).join('');
+  overlay.innerHTML = `
+    <div class="modal">
+      <h3>Report question ${qNum}</h3>
+      <div class="star-row">
+        <label>How good was this question?</label>
+        ${stars}
+      </div>
+      <textarea id="report-complaint" placeholder="What felt off about this question?"></textarea>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="report-cancel">Cancel</button>
+        <button class="btn-submit" id="report-submit">Submit</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  let selectedRating = 0;
+  overlay.querySelectorAll('.star').forEach(el => {
+    el.addEventListener('click', () => {
+      selectedRating = parseInt(el.dataset.star);
+      overlay.querySelectorAll('.star').forEach((s, i) => {
+        s.classList.toggle('on', i < selectedRating);
+      });
+    });
+  });
+
+  overlay.querySelector('#report-cancel').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+  overlay.querySelector('#report-submit').addEventListener('click', async () => {
+    const complaint = overlay.querySelector('#report-complaint').value;
+    if (!selectedRating && !complaint.trim()) { overlay.remove(); return; }
+    const btn = overlay.querySelector('#report-submit');
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    await api('POST', '/api/questions/report', {
+      session_id: sessionId,
+      question_number: qNum,
+      rating: selectedRating || null,
+      complaint: complaint.trim(),
+      option_a: optA,
+      option_b: optB
+    });
+    overlay.remove();
+  });
 }
 
 async function api(method, url, body) {
@@ -281,8 +366,6 @@ function renderQuestion(q, informs) {
     scores: state.scores
   }).then(r => { if (r.error) log('Question save error: ' + r.error); });
 
-  const stars = [1,2,3,4,5].map(n => `<button class="star" data-star="${n}">&#9733;</button>`).join('');
-
   content().innerHTML = `
     ${renderProgress()}
     ${renderScores()}
@@ -292,26 +375,18 @@ function renderQuestion(q, informs) {
       <div class="choice" data-pick="a">${q.a.text}</div>
       <div class="choice" data-pick="b">${q.b.text}</div>
     </div>
-    <div class="star-row">
-      ${stars}
-      <span class="star-label">Rate this question</span>
+    <div class="report-row">
+      <button class="report-btn" id="report-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+        Report this question
+      </button>
     </div>
   `;
   document.querySelectorAll('.choice').forEach(el => {
     el.addEventListener('click', () => handleAnswer(el.dataset.pick, q));
   });
-  document.querySelectorAll('.star').forEach(el => {
-    el.addEventListener('click', () => {
-      const rating = parseInt(el.dataset.star);
-      document.querySelectorAll('.star').forEach((s, i) => {
-        s.classList.toggle('on', i < rating);
-      });
-      api('POST', '/api/questions/rate', {
-        session_id: state.sessionId,
-        question_number: qNum,
-        rating
-      }).then(r => { if (r.error) log('Rating save error: ' + r.error); });
-    });
+  $('#report-btn').addEventListener('click', () => {
+    showReportModal(state.sessionId, qNum, q.a.text, q.b.text);
   });
 }
 
@@ -484,7 +559,7 @@ async function handleStaticAnswer(pick, sq) {
 
   state.messages = [{
     role: 'user',
-    content: `Here are the person's answers to 6 calibration questions with structured weak-prior metadata:\n\n${summary}\n\nTreat calibration items as weak priors only, not conclusions. Form tentative hypotheses, identify the top unresolved type ambiguities, and ask the single next forced-choice question that best discriminates them.`
+    content: `Here are the person's answers to 5 calibration questions with structured weak-prior metadata:\n\n${summary}\n\nTreat calibration items as weak priors only, not conclusions. Form tentative hypotheses, identify the top unresolved type ambiguities, and ask the single next forced-choice question that best discriminates them.`
   }];
 
   try {
