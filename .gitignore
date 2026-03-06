@@ -1,0 +1,4 @@
+node_modules/
+quiz.db
+quiz.db-shm
+quiz.db-wal

@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enneagram Type Finder</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0a0a0a;
+    color: #e0e0e0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  #app {
+    max-width: 600px;
+    width: 100%;
+    padding: 2rem;
+  }
+  h1 {
+    font-size: 1.4rem;
+    font-weight: 300;
+    color: #888;
+    margin-bottom: 2rem;
+    text-align: center;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .progress {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 2rem;
+    justify-content: center;
+  }
+  .progress .dot {
+    width: 8px; height: 8px; border-radius: 50%; background: #222; transition: background 0.3s;
+  }
+  .progress .dot.done { background: #4a9eff; }
+  .progress .dot.current { background: #4a9eff; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .question-num {
+    text-align: center; color: #555; font-size: 0.8rem; margin-bottom: 1.5rem; letter-spacing: 0.05em;
+  }
+  .scores-panel { margin-bottom: 1.5rem; }
+  .scores-panel .score-row {
+    display: flex; align-items: center; margin-bottom: 4px; font-size: 0.7rem;
+  }
+  .scores-panel .score-label { width: 110px; color: #444; font-family: monospace; flex-shrink: 0; }
+  .scores-panel .score-bar {
+    flex: 1; height: 3px; background: #1a1a1a; border-radius: 2px; overflow: hidden; margin: 0 8px;
+  }
+  .scores-panel .score-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+  .scores-panel .score-val {
+    width: 55px; text-align: right; color: #333; font-family: monospace; font-size: 0.65rem; flex-shrink: 0;
+  }
+  .choices { display: flex; flex-direction: column; gap: 1rem; }
+  .choice {
+    padding: 1.5rem; background: #111; border: 1px solid #222; border-radius: 12px;
+    cursor: pointer; transition: all 0.2s; font-size: 1rem; line-height: 1.5; text-align: left;
+  }
+  .choice:hover { border-color: #4a9eff; background: #0d1520; }
+  .choice:active { transform: scale(0.98); }
+  .choice.disabled { pointer-events: none; opacity: 0.4; }
+  .loading { text-align: center; color: #444; padding: 3rem; font-size: 0.9rem; }
+  .loading::after { content: ''; animation: dots 1.5s infinite; }
+  @keyframes dots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+  .result { text-align: center; animation: fadeIn 0.5s ease; }
+  .result .type-num { font-size: 5rem; font-weight: 200; color: #4a9eff; line-height: 1; }
+  .result .type-name { font-size: 1.3rem; color: #888; margin: 0.5rem 0 1.5rem; font-weight: 300; }
+  .result .summary { font-size: 1rem; line-height: 1.7; color: #aaa; max-width: 480px; margin: 0 auto 2rem; }
+  .result .confidence-final { font-size: 0.8rem; color: #444; margin-bottom: 1.5rem; }
+  .result .distribution { margin-top: 1rem; text-align: left; }
+  .result .distribution .row { display: flex; align-items: center; margin-bottom: 6px; font-size: 0.8rem; }
+  .result .distribution .row .num { width: 30px; color: #555; font-family: monospace; }
+  .result .distribution .row .bar-bg {
+    flex: 1; height: 4px; background: #1a1a1a; border-radius: 2px; margin: 0 10px; overflow: hidden;
+  }
+  .result .distribution .row .bar-fill { height: 100%; background: #4a9eff; border-radius: 2px; transition: width 0.5s ease; }
+  .result .distribution .row .pct { width: 35px; text-align: right; color: #444; font-family: monospace; }
+  .result .distribution .row.top .num { color: #4a9eff; }
+  .result .distribution .row.top .bar-fill { background: #4a9eff; }
+  .result .distribution .row.top .pct { color: #4a9eff; }
+  .result .behavioral-grid {
+    margin-top: 2rem; text-align: left; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  }
+  .result .behavioral-grid .sig {
+    font-size: 0.75rem; padding: 8px 10px; background: #111; border-radius: 6px; border: 1px solid #1a1a1a;
+  }
+  .result .behavioral-grid .sig .sig-label { color: #555; font-family: monospace; font-size: 0.65rem; }
+  .result .behavioral-grid .sig .sig-value { color: #aaa; margin-top: 2px; }
+
+  /* Calibration form */
+  .calibration {
+    margin-top: 2rem; padding: 1.5rem; background: #111; border: 1px solid #222; border-radius: 12px; text-align: left;
+  }
+  .calibration h3 { font-size: 0.85rem; color: #888; margin-bottom: 1rem; font-weight: 400; }
+  .calibration .form-row { display: flex; gap: 1rem; margin-bottom: 1rem; align-items: center; }
+  .calibration label { font-size: 0.75rem; color: #555; width: 80px; flex-shrink: 0; }
+  .calibration select, .calibration input, .calibration textarea {
+    background: #0a0a0a; border: 1px solid #222; color: #ccc; padding: 6px 10px;
+    border-radius: 6px; font-size: 0.85rem; flex: 1;
+  }
+  .calibration select:focus, .calibration input:focus, .calibration textarea:focus {
+    outline: none; border-color: #4a9eff;
+  }
+  .calibration textarea { resize: vertical; min-height: 50px; font-family: inherit; }
+  .calibration .submit-btn {
+    padding: 0.6rem 1.5rem; background: #4a9eff; border: none; color: #fff;
+    border-radius: 6px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem;
+  }
+  .calibration .submit-btn:hover { background: #3a8eef; }
+  .calibration .submit-btn:disabled { opacity: 0.4; cursor: default; }
+  .calibration .result-msg { font-size: 0.8rem; margin-top: 0.75rem; }
+  .calibration .result-msg.correct { color: #10b981; }
+  .calibration .result-msg.wrong { color: #ef4444; }
+
+  #restart {
+    margin-top: 1rem; padding: 0.8rem 2rem; background: none; border: 1px solid #333;
+    color: #666; border-radius: 8px; cursor: pointer; font-size: 0.85rem;
+  }
+  #restart:hover { border-color: #4a9eff; color: #4a9eff; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  .debug {
+    margin-top: 2rem; padding: 1rem; background: #0a0a0a; border: 1px solid #1a1a1a;
+    border-radius: 8px; font-family: monospace; font-size: 0.7rem; color: #333;
+    max-height: 200px; overflow-y: auto; display: none;
+  }
+  .debug.show { display: block; }
+  /* Name entry */
+  .name-form { text-align: center; animation: fadeIn 0.5s ease; }
+  .name-form input {
+    background: #111; border: 1px solid #222; color: #e0e0e0; padding: 0.8rem 1.2rem;
+    border-radius: 8px; font-size: 1rem; width: 100%; max-width: 320px; text-align: center;
+    margin-bottom: 1rem;
+  }
+  .name-form input:focus { outline: none; border-color: #4a9eff; }
+  .name-form input::placeholder { color: #444; }
+  .name-form .start-btn {
+    display: block; margin: 0 auto; padding: 0.8rem 2.5rem; background: #4a9eff; border: none;
+    color: #fff; border-radius: 8px; cursor: pointer; font-size: 0.95rem;
+  }
+  .name-form .start-btn:hover { background: #3a8eef; }
+  .name-form .start-btn:disabled { opacity: 0.4; cursor: default; }
+
+  .informs-tag {
+    display: inline-block; font-size: 0.6rem; color: #4a9eff; background: #0d1520;
+    padding: 2px 6px; border-radius: 3px; margin: 2px 2px 0 0; font-family: monospace;
+  }
+  .informs-row { text-align: center; margin-bottom: 1rem; }
+
+  /* Star rating */
+  .star-row { text-align: center; margin-top: 1rem; }
+  .star-row .star {
+    font-size: 1.4rem; cursor: pointer; color: #333; transition: color 0.15s; padding: 0 2px;
+    background: none; border: none;
+  }
+  .star-row .star:hover, .star-row .star.on { color: #f59e0b; }
+  .star-row .star-label { font-size: 0.65rem; color: #444; display: block; margin-top: 4px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>Enneagram</h1>
+  <div id="content">
+    <div class="loading">Preparing first question</div>
+  </div>
+  <div id="debug" class="debug"></div>
+</div>
+
+<script>
+let state = {
+  sessionId: null,
+  questionIndex: 0,
+  answers: [],
+  messages: [],
+  scores: null,
+  lastInforms: null,
+  lastReasoning: null,
+  questionShownAt: null,
+  done: false,
+  staticQuestions: [],
+  staticAnswers: []
+};
+
+const $ = sel => document.querySelector(sel);
+const content = () => $('#content');
+const debug = () => $('#debug');
+
+function log(msg) {
+  const d = debug();
+  d.classList.add('show');
+  d.textContent += msg + '\n';
+  d.scrollTop = d.scrollHeight;
+}
+
+async function api(method, url, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  return res.json();
+}
+
+function renderProgress() {
+  const total = 20;
+  const current = state.questionIndex;
+  let dots = '';
+  for (let i = 0; i < total; i++) {
+    const cls = i < current ? 'done' : i === current ? 'current' : '';
+    dots += `<div class="dot ${cls}"></div>`;
+  }
+  return `<div class="progress">${dots}</div>`;
+}
+
+function renderScores() {
+  if (!state.scores) return '';
+  const s = state.scores;
+  const b = s.behavioral || {};
+  const rows = [
+    { label: 'Core type', conf: s.type_confidence, color: '#4a9eff', val: s.top_types?.[0] ? `${s.top_types[0].type}` : '?' },
+    { label: 'Wing', conf: s.wing_confidence, color: '#a855f7', val: s.likely_wing ? `w${s.likely_wing}` : '?' },
+    { label: 'Anger', conf: b.anger_awareness?.confidence || 0, color: '#ef4444', val: b.anger_awareness?.value || '?' },
+    { label: 'Pressure', conf: b.pressure_stance?.confidence || 0, color: '#06b6d4', val: b.pressure_stance?.value || '?' },
+    { label: 'Good day', conf: b.good_day_anchor?.confidence || 0, color: '#f59e0b', val: b.good_day_anchor?.value || '?' },
+    { label: 'Hurt', conf: b.hurt_response?.confidence || 0, color: '#10b981', val: b.hurt_response?.value || '?' },
+    { label: 'Conflict', conf: b.conflict_entry?.confidence || 0, color: '#8b5cf6', val: b.conflict_entry?.value || '?' },
+    { label: 'No demand', conf: b.no_demand_pattern?.confidence || 0, color: '#f97316', val: b.no_demand_pattern?.value || '?' },
+  ];
+  return `<div class="scores-panel">${rows.map(r => `
+    <div class="score-row">
+      <span class="score-label">${r.label}</span>
+      <div class="score-bar"><div class="score-fill" style="width:${r.conf}%;background:${r.color}"></div></div>
+      <span class="score-val">${r.val} ${r.conf}%</span>
+    </div>`).join('')}
+  </div>`;
+}
+
+function renderStaticQuestion(sq) {
+  state.questionShownAt = Date.now();
+  const qNum = state.questionIndex + 1;
+
+  api('POST', '/api/questions', {
+    session_id: state.sessionId,
+    question_number: qNum,
+    option_a: sq.a,
+    option_b: sq.b,
+    informs: [sq.dimension],
+    reasoning: 'Static calibration question',
+    scores: {}
+  }).then(r => { if (r.error) log('Question save error: ' + r.error); });
+
+  content().innerHTML = `
+    ${renderProgress()}
+    <div class="question-num">Question ${qNum}</div>
+    <div class="informs-row"><span class="informs-tag">${sq.dimension}</span></div>
+    ${sq.stem ? `<p style="color:#e0e0e0; text-align:center; margin-bottom:1.5rem; font-size:1.2rem; font-weight:300;">${sq.stem}</p>` : ''}
+    <div class="choices">
+      <div class="choice" data-pick="a">${sq.a}</div>
+      <div class="choice" data-pick="b">${sq.b}</div>
+    </div>
+  `;
+  document.querySelectorAll('.choice').forEach(el => {
+    el.addEventListener('click', () => handleStaticAnswer(el.dataset.pick, sq));
+  });
+}
+
+function renderQuestion(q, informs) {
+  const informsTags = (informs || []).map(t => `<span class="informs-tag">${t}</span>`).join('');
+  state.questionShownAt = Date.now();
+  const qNum = state.questionIndex + 1;
+
+  api('POST', '/api/questions', {
+    session_id: state.sessionId,
+    question_number: qNum,
+    option_a: q.a.text,
+    option_b: q.b.text,
+    informs: informs,
+    reasoning: state.lastReasoning,
+    scores: state.scores
+  }).then(r => { if (r.error) log('Question save error: ' + r.error); });
+
+  const stars = [1,2,3,4,5].map(n => `<button class="star" data-star="${n}">&#9733;</button>`).join('');
+
+  content().innerHTML = `
+    ${renderProgress()}
+    ${renderScores()}
+    <div class="question-num">Question ${qNum}</div>
+    ${informsTags ? `<div class="informs-row">${informsTags}</div>` : ''}
+    <div class="choices">
+      <div class="choice" data-pick="a">${q.a.text}</div>
+      <div class="choice" data-pick="b">${q.b.text}</div>
+    </div>
+    <div class="star-row">
+      ${stars}
+      <span class="star-label">Rate this question</span>
+    </div>
+  `;
+  document.querySelectorAll('.choice').forEach(el => {
+    el.addEventListener('click', () => handleAnswer(el.dataset.pick, q));
+  });
+  document.querySelectorAll('.star').forEach(el => {
+    el.addEventListener('click', () => {
+      const rating = parseInt(el.dataset.star);
+      document.querySelectorAll('.star').forEach((s, i) => {
+        s.classList.toggle('on', i < rating);
+      });
+      api('POST', '/api/questions/rate', {
+        session_id: state.sessionId,
+        question_number: qNum,
+        rating
+      }).then(r => { if (r.error) log('Rating save error: ' + r.error); });
+    });
+  });
+}
+
+function renderLoading() {
+  content().innerHTML = `
+    ${renderProgress()}
+    ${renderScores()}
+    <div class="loading">Thinking</div>
+  `;
+}
+
+function renderResult(result, scores) {
+  const topTypes = scores.top_types || [];
+  const maxProb = Math.max(...topTypes.map(t => t.probability));
+  const rows = topTypes.map(t => {
+    const isTop = t.type === result.type;
+    const width = (t.probability / maxProb) * 100;
+    return `<div class="row ${isTop ? 'top' : ''}">
+      <span class="num">${t.type}</span>
+      <div class="bar-bg"><div class="bar-fill" style="width:${width}%"></div></div>
+      <span class="pct">${Math.round(t.probability)}%</span>
+    </div>`;
+  }).join('');
+
+  const b = scores.behavioral || {};
+  const signals = [
+    { label: 'Anger awareness', value: b.anger_awareness?.value },
+    { label: 'Pressure stance', value: b.pressure_stance?.value },
+    { label: 'Good day anchor', value: b.good_day_anchor?.value },
+    { label: 'Hurt response', value: b.hurt_response?.value },
+    { label: 'Conflict entry', value: b.conflict_entry?.value },
+    { label: 'No demand pattern', value: b.no_demand_pattern?.value },
+  ];
+  const sigGrid = signals.map(s => `
+    <div class="sig">
+      <div class="sig-label">${s.label}</div>
+      <div class="sig-value">${s.value || 'unknown'}</div>
+    </div>`).join('');
+
+  const guessedType = result.type || 0;
+  const guessedWing = result.wing || 0;
+  const typeOptions = [1,2,3,4,5,6,7,8,9].map(t =>
+    `<option value="${t}"${t === guessedType ? ' selected' : ''}>Type ${t}</option>`
+  ).join('');
+  const wingOptions = [1,2,3,4,5,6,7,8,9].map(t =>
+    `<option value="${t}"${t === guessedWing ? ' selected' : ''}>w${t}</option>`
+  ).join('');
+
+  content().innerHTML = `
+    <div class="result">
+      <div class="type-num">${result.type}</div>
+      <div class="type-name">${result.wing_name || ''}</div>
+      <div class="summary">${result.summary}</div>
+      <div class="confidence-final">${scores.type_confidence}% type / ${scores.wing_confidence}% wing — ${state.questionIndex} questions</div>
+      <div class="distribution">${rows}</div>
+      <div class="behavioral-grid">${sigGrid}</div>
+
+      <div class="calibration">
+        <h3>What's the real type? (for calibration)</h3>
+        <div class="form-row">
+          <label>Type</label>
+          <select id="actual-type">${typeOptions}</select>
+        </div>
+        <div class="form-row">
+          <label>Wing</label>
+          <select id="actual-wing">${wingOptions}</select>
+        </div>
+        <div class="form-row">
+          <label>Notes</label>
+          <textarea id="cal-notes" placeholder="Optional — what went wrong, what was confusing, etc."></textarea>
+        </div>
+        <button class="submit-btn" id="cal-submit">Save calibration</button>
+        <div id="cal-result"></div>
+      </div>
+
+      <button id="restart">Start over</button>
+    </div>
+  `;
+
+  $('#cal-submit').addEventListener('click', async () => {
+    const btn = $('#cal-submit');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    const actualType = parseInt($('#actual-type').value);
+    const actualWing = parseInt($('#actual-wing').value);
+    const notes = $('#cal-notes').value;
+    const res = await api('POST', '/api/sessions/actual', {
+      session_id: state.sessionId,
+      actual_type: actualType,
+      actual_wing: actualWing,
+      notes
+    });
+    const el = $('#cal-result');
+    if (res.correct_type && res.correct_wing) {
+      el.className = 'result-msg correct';
+      el.textContent = 'Correct on both type and wing!';
+    } else if (res.correct_type) {
+      el.className = 'result-msg correct';
+      el.textContent = 'Type correct, wing wrong.';
+    } else {
+      el.className = 'result-msg wrong';
+      el.textContent = `Wrong — guessed ${result.type}w${result.wing}, actual ${actualType}w${actualWing}. Saved.`;
+    }
+    btn.textContent = 'Saved';
+  });
+
+  $('#restart').addEventListener('click', () => {
+    state = { sessionId: null, name: null, questionIndex: 0, answers: [], messages: [], scores: null, lastInforms: null, lastReasoning: null, questionShownAt: null, done: false, staticQuestions: [], staticAnswers: [] };
+    showNameForm();
+  });
+}
+
+async function callLLM(messages) {
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages, session_id: state.sessionId })
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  let text = data.content[0].text;
+  log('LLM: ' + text.substring(0, 300));
+  // Strip markdown code fences if the model wraps its response
+  const fenceMatch = text.match(/```(?:json)?\s*\n([\s\S]*?)\n\s*```/i);
+  if (fenceMatch) text = fenceMatch[1];
+  text = text.trim();
+  return JSON.parse(text);
+}
+
+async function handleStaticAnswer(pick, sq) {
+  document.querySelectorAll('.choice').forEach(el => el.classList.add('disabled'));
+
+  const responseTimeMs = state.questionShownAt ? Date.now() - state.questionShownAt : 0;
+  const chosenText = pick === 'a' ? sq.a : sq.b;
+  const unchosenText = pick === 'a' ? sq.b : sq.a;
+
+  state.staticAnswers.push({ dimension: sq.dimension, picked: pick, chosen: chosenText, unchosen: unchosenText, responseTimeMs });
+  state.questionIndex++;
+
+  api('POST', '/api/questions/answer', {
+    session_id: state.sessionId,
+    question_number: state.questionIndex,
+    picked: pick,
+    chosen_text: chosenText,
+    unchosen_text: unchosenText,
+    response_time_ms: responseTimeMs
+  }).then(r => { if (r.error) log('Answer save error: ' + r.error); });
+
+  // More static questions to show?
+  if (state.questionIndex < state.staticQuestions.length) {
+    renderStaticQuestion(state.staticQuestions[state.questionIndex]);
+    return;
+  }
+
+  // Static phase done — batch all answers to LLM
+  renderLoading();
+
+  const summary = state.staticAnswers.map(a => {
+    const sq = state.staticQuestions.find(q => q.dimension === a.dimension);
+    const chosenPole = a.chosen === sq.a ? "A" : "B";
+    return JSON.stringify({
+      dimension: a.dimension,
+      chosen_pole: chosenPole,
+      chosen_text: a.chosen,
+      unchosen_text: a.unchosen,
+      response_time_ms: a.responseTimeMs,
+      signal: sq.signal
+    }, null, 2);
+  }).join('\n\n');
+
+  state.messages = [{
+    role: 'user',
+    content: `Here are the person's answers to 6 calibration questions with structured weak-prior metadata:\n\n${summary}\n\nTreat calibration items as weak priors only, not conclusions. Form tentative hypotheses, identify the top unresolved type ambiguities, and ask the single next forced-choice question that best discriminates them.`
+  }];
+
+  try {
+    const response = await callLLM(state.messages);
+    state.messages.push({ role: 'assistant', content: JSON.stringify(response) });
+    state.scores = response.scores || null;
+    state.lastInforms = response.informs || null;
+    state.lastReasoning = response.reasoning || null;
+    renderQuestion(response.question, response.informs);
+  } catch (err) {
+    log('Error: ' + err.message);
+    content().innerHTML = `<div class="loading" style="color:#ff4a4a">Error: ${err.message}. Refresh to retry.</div>`;
+  }
+}
+
+async function handleAnswer(pick, question) {
+  document.querySelectorAll('.choice').forEach(el => el.classList.add('disabled'));
+
+  const responseTimeMs = state.questionShownAt ? Date.now() - state.questionShownAt : 0;
+  const chosen = pick === 'a' ? question.a : question.b;
+  const unchosen = pick === 'a' ? question.b : question.a;
+
+  state.answers.push({ picked: pick, chosen: chosen.text, unchosen: unchosen.text, responseTimeMs });
+  state.questionIndex++;
+
+  api('POST', '/api/questions/answer', {
+    session_id: state.sessionId,
+    question_number: state.questionIndex,
+    picked: pick,
+    chosen_text: chosen.text,
+    unchosen_text: unchosen.text,
+    response_time_ms: responseTimeMs
+  }).then(r => { if (r.error) log('Answer save error: ' + r.error); });
+
+  renderLoading();
+
+  state.messages.push({
+    role: 'user',
+    content: `User picked ${pick.toUpperCase()}: "${chosen.text}" (over: "${unchosen.text}"). Response time: ${(responseTimeMs/1000).toFixed(1)}s. Generate the next question or finalize.`
+  });
+
+  try {
+    const response = await callLLM(state.messages);
+
+    state.messages.push({ role: 'assistant', content: JSON.stringify(response) });
+    state.scores = response.scores || null;
+    state.lastInforms = response.informs || null;
+    state.lastReasoning = response.reasoning || null;
+
+    if (response.status === 'done' || state.questionIndex >= 20) {
+      state.done = true;
+
+      const result = response.result || {
+        type: response.scores?.top_types?.[0]?.type || 0,
+        wing: response.scores?.likely_wing || 0,
+        wing_name: response.scores?.top_types?.[0]
+          ? `${response.scores.top_types[0].type}w${response.scores.likely_wing || '?'}`
+          : 'Unknown',
+        summary: 'Max questions reached. Result based on accumulated scores.'
+      };
+
+      api('POST', '/api/sessions/complete', {
+        session_id: state.sessionId,
+        question_count: state.questionIndex,
+        guessed_type: result.type,
+        guessed_wing: result.wing,
+        guessed_wing_name: result.wing_name,
+        guessed_summary: result.summary,
+        final_scores: response.scores
+      });
+
+      renderResult(result, response.scores);
+    } else {
+      renderQuestion(response.question, response.informs);
+    }
+  } catch (err) {
+    log('Error: ' + err.message);
+    content().innerHTML = `<div class="loading" style="color:#ff4a4a">Error: ${err.message}. Refresh to retry.</div>`;
+  }
+}
+
+function showNameForm() {
+  content().innerHTML = `
+    <div class="name-form">
+      <p style="color:#555; font-size:0.85rem; margin-bottom:1.5rem;">Enter your name to begin</p>
+      <input type="text" id="name-input" placeholder="Your name" autofocus>
+      <button class="start-btn" id="begin-btn">Begin</button>
+    </div>
+  `;
+  const input = $('#name-input');
+  const btn = $('#begin-btn');
+  btn.addEventListener('click', () => startQuiz(input.value.trim()));
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') startQuiz(input.value.trim());
+  });
+}
+
+async function startQuiz(name) {
+  if (!name) { $('#name-input').focus(); return; }
+  renderLoading();
+
+  const [{ id }, staticQuestions] = await Promise.all([
+    api('POST', '/api/sessions', { name }),
+    api('GET', '/api/static-questions')
+  ]);
+
+  state.sessionId = id;
+  state.name = name;
+  state.staticQuestions = staticQuestions;
+  state.staticAnswers = [];
+  log('Session: ' + id + ' (' + name + ')');
+
+  renderStaticQuestion(state.staticQuestions[0]);
+}
+
+showNameForm();
+</script>
+</body>
+</html>
