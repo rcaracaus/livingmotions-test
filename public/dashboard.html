@@ -655,9 +655,39 @@ function attachReportHandlers() {
       : '<div class="loading-text">Generating report</div>';
 
     try {
-      const data = await api('POST', '/api/report/individual', { session_id: activeSessionId, regenerate });
-      output.innerHTML = `<div class="report-container">${renderMarkdown(data.report)}</div>`;
-      if (data.cached) output.insertAdjacentHTML('afterbegin', '<div style="font-size:0.65rem;color:#333;margin-bottom:0.5rem;font-family:monospace;">Cached report from ' + (data.created_at || 'earlier') + '</div>');
+      const res = await fetch('/api/report/individual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: activeSessionId, regenerate })
+      });
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const data = await res.json();
+        output.innerHTML = `<div class="report-container">${renderMarkdown(data.report)}</div>`;
+        if (data.cached) output.insertAdjacentHTML('afterbegin', '<div style="font-size:0.65rem;color:#333;margin-bottom:0.5rem;font-family:monospace;">Cached report from ' + (data.created_at || 'earlier') + '</div>');
+      } else {
+        output.innerHTML = '<div class="report-container"></div>';
+        const container = output.querySelector('.report-container');
+        let fullText = '';
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop();
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const evt = JSON.parse(line.slice(6));
+                if (evt.text) { fullText += evt.text; container.innerHTML = renderMarkdown(fullText); }
+              } catch (_) {}
+            }
+          }
+        }
+      }
       genIndBtn.style.display = 'none';
       regenIndBtn.style.display = 'inline-block';
     } catch (e) {
@@ -723,13 +753,39 @@ function attachReportHandlers() {
       : '<div class="loading-text">Generating relationship report</div>';
 
     try {
-      const data = await api('POST', '/api/report/relationship', {
-        session_id_a: activeSessionId,
-        session_id_b: secondSessionId,
-        regenerate
+      const res = await fetch('/api/report/relationship', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id_a: activeSessionId, session_id_b: secondSessionId, regenerate })
       });
-      output.innerHTML = `<div class="report-container">${renderMarkdown(data.report)}</div>`;
-      if (data.cached) output.insertAdjacentHTML('afterbegin', '<div style="font-size:0.65rem;color:#333;margin-bottom:0.5rem;font-family:monospace;">Cached report from ' + (data.created_at || 'earlier') + '</div>');
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const data = await res.json();
+        output.innerHTML = `<div class="report-container">${renderMarkdown(data.report)}</div>`;
+        if (data.cached) output.insertAdjacentHTML('afterbegin', '<div style="font-size:0.65rem;color:#333;margin-bottom:0.5rem;font-family:monospace;">Cached report from ' + (data.created_at || 'earlier') + '</div>');
+      } else {
+        output.innerHTML = '<div class="report-container"></div>';
+        const container = output.querySelector('.report-container');
+        let fullText = '';
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop();
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const evt = JSON.parse(line.slice(6));
+                if (evt.text) { fullText += evt.text; container.innerHTML = renderMarkdown(fullText); }
+              } catch (_) {}
+            }
+          }
+        }
+      }
       genRelBtn.style.display = 'none';
       regenRelBtn.style.display = 'inline-block';
     } catch (e) {
