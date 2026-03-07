@@ -6,7 +6,18 @@ const Database = require('better-sqlite3');
 const engine = require('./engine');
 const prompts = require('./prompts');
 
-const ANTHROPIC_API_KEY = 'REDACTED';
+// Load .env file if present
+try {
+  const envPath = path.join(__dirname, '.env');
+  if (fs.existsSync(envPath)) {
+    fs.readFileSync(envPath, 'utf8').split('\n').forEach(line => {
+      const [key, ...val] = line.split('=');
+      if (key && val.length) process.env[key.trim()] = val.join('=').trim();
+    });
+  }
+} catch (_) {}
+
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const MODEL = 'claude-sonnet-4-20250514';
 
 // ─── Database setup ──────────────────────────────────────────────────
