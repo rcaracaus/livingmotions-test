@@ -317,6 +317,35 @@ async function api(method, url, body) {
 // ── Simple Markdown Renderer ──
 function renderMarkdown(text) {
   if (!text) return '';
+
+  // Extract code blocks first to protect them
+  const codeBlocks = [];
+  text = text.replace(/```(?:\w*)\n([\s\S]*?)```/g, (_, code) => {
+    codeBlocks.push(code);
+    return `__CODE_BLOCK_${codeBlocks.length - 1}__`;
+  });
+
+  // Extract tables
+  const tables = [];
+  text = text.replace(/((?:^\|.+\|$\n?)+)/gm, (match) => {
+    const rows = match.trim().split('\n').filter(r => r.trim());
+    if (rows.length < 2) return match;
+    let tableHtml = '<table style="width:100%;border-collapse:collapse;font-size:0.8rem;margin:0.75rem 0;">';
+    rows.forEach((row, i) => {
+      // Skip separator rows (|---|---|)
+      if (/^\|[\s\-:|]+\|$/.test(row)) return;
+      const cells = row.split('|').filter((_, idx, arr) => idx > 0 && idx < arr.length - 1);
+      const tag = i === 0 ? 'th' : 'td';
+      const style = i === 0
+        ? 'padding:6px 10px;border-bottom:2px solid #333;text-align:left;color:#4a9eff;font-weight:500;'
+        : 'padding:6px 10px;border-bottom:1px solid #1a1a1a;text-align:left;color:#ccc;';
+      tableHtml += '<tr>' + cells.map(c => `<${tag} style="${style}">${c.trim()}</${tag}>`).join('') + '</tr>';
+    });
+    tableHtml += '</table>';
+    tables.push(tableHtml);
+    return `__TABLE_${tables.length - 1}__`;
+  });
+
   let html = text
     // Escape HTML
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -340,6 +369,19 @@ function renderMarkdown(text) {
     .replace(/\n\n/g, '</p><p>')
     // Single newlines within paragraphs
     .replace(/\n/g, '<br>');
+
+  // Restore code blocks
+  codeBlocks.forEach((code, i) => {
+    const escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    html = html.replace(`__CODE_BLOCK_${i}__`,
+      `<pre style="background:#0a0a0a;border:1px solid #1a1a1a;border-radius:8px;padding:1rem;overflow-x:auto;font-family:monospace;font-size:0.8rem;line-height:1.6;color:#aaa;margin:0.75rem 0;white-space:pre;">${escaped}</pre>`);
+  });
+
+  // Restore tables
+  tables.forEach((tableHtml, i) => {
+    html = html.replace(`__TABLE_${i}__`, tableHtml);
+  });
+
   return '<p>' + html + '</p>';
 }
 
@@ -444,8 +486,7 @@ function renderMain() {
     <div class="fade-in">
       ${renderProfileSection(profileTitle, fs)}
       ${renderIndividualReport()}
-      ${renderRelationshipReport()}
-      ${renderMirrorChat()}
+      ${renderRelationshipSection()}
     </div>
   `;
 
@@ -546,31 +587,33 @@ function renderIndividualReport() {
   </div>`;
 }
 
-// ── Section 3: Relationship Report ──
-function renderRelationshipReport() {
+// ── Section 3: Relationship Section (select + stats + report + chat) ──
+function renderRelationshipSection() {
   const otherSessions = allSessions.filter(s => s.id !== activeSessionId);
   const options = otherSessions.map(s => {
     const typeStr = s.guessed_type + (s.guessed_wing ? 'w' + s.guessed_wing : '');
     return `<option value="${s.id}">${esc(s.name || 'Anonymous')} (${typeStr})</option>`;
   }).join('');
 
-  return `<div class="card" id="relationship-report-card">
-    <h2>Relationship Motion Report</h2>
+  return `<div class="card" id="relationship-select-card">
+    <h2>Compare With</h2>
     <div class="section-row">
       <select class="select-styled" id="second-person-select">
         <option value="">Select a second person...</option>
         ${options}
       </select>
-      <button class="btn btn-primary" id="gen-relationship-btn" disabled>Generate Relationship Report</button>
+    </div>
+  </div>
+  <div id="second-person-profile"></div>
+  <div class="card" id="relationship-report-card" style="display:none;">
+    <h2>Relationship Motion Report</h2>
+    <div class="section-row">
+      <button class="btn btn-primary" id="gen-relationship-btn">Generate Relationship Report</button>
       <button class="btn btn-secondary" id="regen-relationship-btn" style="display:none;">Regenerate</button>
     </div>
     <div id="relationship-report-output"></div>
-  </div>`;
-}
-
-// ── Section 4: Mirror Chat ──
-function renderMirrorChat() {
-  return `<div class="card" id="mirror-chat-card" style="display:none;">
+  </div>
+  <div class="card" id="mirror-chat-card" style="display:none;">
     <h2>Mirror Chat</h2>
     <div id="chat-subtitle" style="font-size:0.8rem;color:#555;margin-bottom:0.75rem;"></div>
     <div class="chat-container">
@@ -581,6 +624,20 @@ function renderMirrorChat() {
       </div>
     </div>
   </div>`;
+}
+
+function renderSecondPersonProfile(session, fs) {
+  const typeName = TYPE_NAMES[session.guessed_type] || '';
+  const wingType = session.guessed_wing || fs.likely_wing;
+  const wingName = session.guessed_wing_name || '';
+  const typeLabel = session.guessed_type + (wingType ? 'w' + wingType : '');
+  const fullWingName = wingName || (wingType ? TYPE_NAMES[wingType] || '' : '');
+
+  let profileTitle = esc(session.name || 'Anonymous');
+  profileTitle += ` &mdash; Type ${typeLabel}`;
+  if (fullWingName) profileTitle += ` The ${fullWingName}`;
+
+  return renderProfileSection(profileTitle, fs);
 }
 
 // ── Attach Event Handlers ──
@@ -616,17 +673,31 @@ function attachReportHandlers() {
   const secondSelect = document.getElementById('second-person-select');
   const genRelBtn = document.getElementById('gen-relationship-btn');
   const regenRelBtn = document.getElementById('regen-relationship-btn');
+  const relCard = document.getElementById('relationship-report-card');
   const chatCard = document.getElementById('mirror-chat-card');
+  const secondProfile = document.getElementById('second-person-profile');
 
-  secondSelect.addEventListener('change', () => {
+  secondSelect.addEventListener('change', async () => {
     secondSessionId = secondSelect.value || null;
-    genRelBtn.disabled = !secondSessionId;
     genRelBtn.style.display = 'inline-block';
     regenRelBtn.style.display = 'none';
     document.getElementById('relationship-report-output').innerHTML = '';
 
     if (secondSessionId) {
+      // Load second person's full data
+      secondProfile.innerHTML = '<div class="card"><div class="loading-text">Loading profile</div></div>';
+      relCard.style.display = 'block';
       chatCard.style.display = 'block';
+
+      try {
+        const data = await api('GET', '/api/sessions/' + secondSessionId);
+        const session2 = data.session;
+        const fs2 = session2.final_scores || {};
+        secondProfile.innerHTML = renderSecondPersonProfile(session2, fs2);
+      } catch (e) {
+        secondProfile.innerHTML = '<div class="card"><div class="error-text">Failed to load profile</div></div>';
+      }
+
       const secondSession = allSessions.find(s => s.id === secondSessionId);
       const nameA = activeSession.name || 'Anonymous';
       const nameB = secondSession ? (secondSession.name || 'Anonymous') : 'Person B';
@@ -635,6 +706,8 @@ function attachReportHandlers() {
       chatMessages = [];
       renderChatMessages();
     } else {
+      secondProfile.innerHTML = '';
+      relCard.style.display = 'none';
       chatCard.style.display = 'none';
     }
   });

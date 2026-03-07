@@ -4,3 +4,4 @@ quiz.db-shm
 quiz.db-wal
 .env
 .vercel
+.env*.local
