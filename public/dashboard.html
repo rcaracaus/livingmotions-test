@@ -17,7 +17,21 @@ body {
   width: 250px; min-width: 250px; background: #0d0d0d;
   border-right: 1px solid #1a1a1a; display: flex; flex-direction: column;
   height: 100vh; position: fixed; left: 0; top: 0; z-index: 10;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
+.sidebar.collapsed { transform: translateX(-250px); }
+.sidebar.collapsed.flyout { transform: translateX(0); box-shadow: 4px 0 24px rgba(0,0,0,0.5); }
+
+.sidebar-toggle {
+  position: fixed; top: 12px; left: 12px; z-index: 20;
+  width: 36px; height: 36px; border-radius: 8px;
+  background: #111; border: 1px solid #222; color: #888;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; font-size: 1.1rem;
+}
+.sidebar-toggle:hover { color: #4a9eff; border-color: #4a9eff; background: #0d1520; }
+.sidebar-toggle.shifted { left: 262px; }
+
 .sidebar-title {
   padding: 1.5rem 1.2rem 1rem; font-size: 1rem; font-weight: 600;
   color: #4a9eff; letter-spacing: 0.05em; border-bottom: 1px solid #1a1a1a;
@@ -56,7 +70,9 @@ body {
 .main {
   margin-left: 250px; flex: 1; padding: 2rem 2.5rem;
   min-height: 100vh; overflow-y: auto;
+  transition: margin-left 0.25s ease;
 }
+.main.expanded { margin-left: 0; }
 .main-empty {
   display: flex; align-items: center; justify-content: center;
   height: 80vh; color: #333; font-size: 0.95rem;
@@ -160,6 +176,8 @@ body {
 .btn-primary { background: #4a9eff; color: #fff; }
 .btn-primary:hover { background: #3a8eef; }
 .btn-primary:disabled { opacity: 0.4; cursor: default; }
+.btn-secondary { background: #222; color: #888; }
+.btn-secondary:hover { background: #2a2a2a; color: #e0e0e0; }
 .btn-loading {
   position: relative; color: transparent !important;
 }
@@ -258,7 +276,9 @@ body {
 </head>
 <body>
 
-<nav class="sidebar">
+<button class="sidebar-toggle shifted" id="sidebar-toggle" title="Toggle sidebar">&#9776;</button>
+
+<nav class="sidebar" id="sidebar">
   <div class="sidebar-title">Living Motions</div>
   <div class="sidebar-sessions" id="sidebar-sessions">
     <div class="loading-text" style="padding:1rem;text-align:center;">Loading sessions</div>
@@ -520,6 +540,7 @@ function renderIndividualReport() {
     <h2>Individual Motion Report</h2>
     <div class="section-row">
       <button class="btn btn-primary" id="gen-individual-btn">Generate Report</button>
+      <button class="btn btn-secondary" id="regen-individual-btn" style="display:none;">Regenerate</button>
     </div>
     <div id="individual-report-output"></div>
   </div>`;
@@ -541,6 +562,7 @@ function renderRelationshipReport() {
         ${options}
       </select>
       <button class="btn btn-primary" id="gen-relationship-btn" disabled>Generate Relationship Report</button>
+      <button class="btn btn-secondary" id="regen-relationship-btn" style="display:none;">Regenerate</button>
     </div>
     <div id="relationship-report-output"></div>
   </div>`;
@@ -565,30 +587,43 @@ function renderMirrorChat() {
 function attachReportHandlers() {
   // Individual report
   const genIndBtn = document.getElementById('gen-individual-btn');
-  genIndBtn.addEventListener('click', async () => {
+  const regenIndBtn = document.getElementById('regen-individual-btn');
+
+  async function generateIndividual(regenerate) {
     genIndBtn.disabled = true;
-    genIndBtn.classList.add('btn-loading');
+    regenIndBtn.style.display = 'none';
     const output = document.getElementById('individual-report-output');
-    output.innerHTML = '<div class="loading-text">Generating report</div>';
+    output.innerHTML = regenerate
+      ? '<div class="loading-text">Regenerating report</div>'
+      : '<div class="loading-text">Generating report</div>';
 
     try {
-      const data = await api('POST', '/api/report/individual', { session_id: activeSessionId });
+      const data = await api('POST', '/api/report/individual', { session_id: activeSessionId, regenerate });
       output.innerHTML = `<div class="report-container">${renderMarkdown(data.report)}</div>`;
+      if (data.cached) output.insertAdjacentHTML('afterbegin', '<div style="font-size:0.65rem;color:#333;margin-bottom:0.5rem;font-family:monospace;">Cached report from ' + (data.created_at || 'earlier') + '</div>');
+      genIndBtn.style.display = 'none';
+      regenIndBtn.style.display = 'inline-block';
     } catch (e) {
       output.innerHTML = '<div class="error-text">Failed to generate report</div>';
     }
     genIndBtn.disabled = false;
-    genIndBtn.classList.remove('btn-loading');
-  });
+  }
+
+  genIndBtn.addEventListener('click', () => generateIndividual(false));
+  regenIndBtn.addEventListener('click', () => generateIndividual(true));
 
   // Second person select
   const secondSelect = document.getElementById('second-person-select');
   const genRelBtn = document.getElementById('gen-relationship-btn');
+  const regenRelBtn = document.getElementById('regen-relationship-btn');
   const chatCard = document.getElementById('mirror-chat-card');
 
   secondSelect.addEventListener('change', () => {
     secondSessionId = secondSelect.value || null;
     genRelBtn.disabled = !secondSessionId;
+    genRelBtn.style.display = 'inline-block';
+    regenRelBtn.style.display = 'none';
+    document.getElementById('relationship-report-output').innerHTML = '';
 
     if (secondSessionId) {
       chatCard.style.display = 'block';
@@ -605,25 +640,33 @@ function attachReportHandlers() {
   });
 
   // Relationship report
-  genRelBtn.addEventListener('click', async () => {
+  async function generateRelationship(regenerate) {
     if (!secondSessionId) return;
     genRelBtn.disabled = true;
-    genRelBtn.classList.add('btn-loading');
+    regenRelBtn.style.display = 'none';
     const output = document.getElementById('relationship-report-output');
-    output.innerHTML = '<div class="loading-text">Generating relationship report</div>';
+    output.innerHTML = regenerate
+      ? '<div class="loading-text">Regenerating relationship report</div>'
+      : '<div class="loading-text">Generating relationship report</div>';
 
     try {
       const data = await api('POST', '/api/report/relationship', {
         session_id_a: activeSessionId,
-        session_id_b: secondSessionId
+        session_id_b: secondSessionId,
+        regenerate
       });
       output.innerHTML = `<div class="report-container">${renderMarkdown(data.report)}</div>`;
+      if (data.cached) output.insertAdjacentHTML('afterbegin', '<div style="font-size:0.65rem;color:#333;margin-bottom:0.5rem;font-family:monospace;">Cached report from ' + (data.created_at || 'earlier') + '</div>');
+      genRelBtn.style.display = 'none';
+      regenRelBtn.style.display = 'inline-block';
     } catch (e) {
       output.innerHTML = '<div class="error-text">Failed to generate report</div>';
     }
     genRelBtn.disabled = false;
-    genRelBtn.classList.remove('btn-loading');
-  });
+  }
+
+  genRelBtn.addEventListener('click', () => generateRelationship(false));
+  regenRelBtn.addEventListener('click', () => generateRelationship(true));
 
   // Chat
   const chatInput = document.getElementById('chat-input');
@@ -677,6 +720,29 @@ function renderChatMessages(showTyping) {
   container.innerHTML = html;
   container.scrollTop = container.scrollHeight;
 }
+
+// ── Sidebar Toggle ──
+const sidebar = document.getElementById('sidebar');
+const sidebarToggle = document.getElementById('sidebar-toggle');
+const mainEl = document.getElementById('main');
+let sidebarCollapsed = false;
+
+sidebarToggle.addEventListener('click', () => {
+  sidebarCollapsed = !sidebarCollapsed;
+  sidebar.classList.toggle('collapsed', sidebarCollapsed);
+  mainEl.classList.toggle('expanded', sidebarCollapsed);
+  sidebarToggle.classList.toggle('shifted', !sidebarCollapsed);
+  // Remove flyout if expanding
+  if (!sidebarCollapsed) sidebar.classList.remove('flyout');
+});
+
+// Flyout on hover when collapsed
+sidebar.addEventListener('mouseenter', () => {
+  if (sidebarCollapsed) sidebar.classList.add('flyout');
+});
+sidebar.addEventListener('mouseleave', () => {
+  if (sidebarCollapsed) sidebar.classList.remove('flyout');
+});
 
 // ── Init ──
 loadSessions();

@@ -3,3 +3,4 @@ quiz.db
 quiz.db-shm
 quiz.db-wal
 .env
+.vercel
