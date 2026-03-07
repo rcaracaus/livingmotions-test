@@ -44,17 +44,72 @@
   .question-num {
     text-align: center; color: #555; font-size: 0.8rem; margin-bottom: 1.5rem; letter-spacing: 0.05em;
   }
-  .scores-panel { margin-bottom: 1.5rem; }
-  .scores-panel .score-row {
-    display: flex; align-items: center; margin-bottom: 4px; font-size: 0.7rem;
+  .scores-panel {
+    margin-bottom: 1.5rem; background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 10px;
+    padding: 1rem; font-size: 0.75rem;
   }
-  .scores-panel .score-label { width: 110px; color: #444; font-family: monospace; flex-shrink: 0; }
-  .scores-panel .score-bar {
-    flex: 1; height: 3px; background: #1a1a1a; border-radius: 2px; overflow: hidden; margin: 0 8px;
+  .scores-panel .sp-section {
+    margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid #151515;
   }
-  .scores-panel .score-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
-  .scores-panel .score-val {
-    width: 55px; text-align: right; color: #333; font-family: monospace; font-size: 0.65rem; flex-shrink: 0;
+  .scores-panel .sp-section:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+  .scores-panel .sp-heading {
+    font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; color: #444; margin-bottom: 0.5rem;
+  }
+  /* Type distribution */
+  .scores-panel .type-grid {
+    display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px;
+  }
+  .scores-panel .type-cell {
+    text-align: center; padding: 6px 2px; border-radius: 6px; transition: all 0.4s ease;
+    border: 1px solid transparent;
+  }
+  .scores-panel .type-cell .tc-num {
+    font-family: monospace; font-size: 0.85rem; font-weight: 600; line-height: 1;
+  }
+  .scores-panel .type-cell .tc-pct {
+    font-family: monospace; font-size: 0.55rem; margin-top: 2px; opacity: 0.7;
+  }
+  .scores-panel .type-cell .tc-bar {
+    height: 3px; border-radius: 2px; margin: 4px auto 0; transition: width 0.5s ease;
+    max-width: 80%;
+  }
+  /* Confidence badges */
+  .scores-panel .conf-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .scores-panel .conf-badge {
+    display: flex; align-items: center; gap: 6px; padding: 4px 10px;
+    background: #111; border: 1px solid #1a1a1a; border-radius: 6px; font-size: 0.7rem;
+  }
+  .scores-panel .conf-badge .conf-label { color: #555; }
+  .scores-panel .conf-badge .conf-val { font-family: monospace; font-weight: 600; }
+  .scores-panel .conf-badge .conf-val.high { color: #10b981; }
+  .scores-panel .conf-badge .conf-val.mid { color: #f59e0b; }
+  .scores-panel .conf-badge .conf-val.low { color: #ef4444; }
+  /* Behavioral signals */
+  .scores-panel .sig-row {
+    display: flex; align-items: center; margin-bottom: 3px; gap: 6px;
+  }
+  .scores-panel .sig-name {
+    width: 100px; font-family: monospace; font-size: 0.6rem; color: #444; flex-shrink: 0;
+  }
+  .scores-panel .sig-pill {
+    font-size: 0.6rem; padding: 2px 8px; border-radius: 4px; font-family: monospace;
+  }
+  .scores-panel .sig-pill.set { background: #0d1520; color: #4a9eff; border: 1px solid #1a3050; }
+  .scores-panel .sig-pill.unset { background: #111; color: #333; border: 1px solid #1a1a1a; }
+  .scores-panel .sig-conf {
+    font-family: monospace; font-size: 0.6rem; color: #333; margin-left: auto;
+  }
+  /* Status tags */
+  .scores-panel .status-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .scores-panel .status-tag {
+    font-size: 0.6rem; padding: 3px 8px; border-radius: 4px; font-family: monospace;
+  }
+  .scores-panel .status-tag.ok { background: #0a1f0a; color: #10b981; border: 1px solid #10b98133; }
+  .scores-panel .status-tag.warn { background: #1f1a0a; color: #f59e0b; border: 1px solid #f59e0b33; }
+  .scores-panel .status-tag.bad { background: #1f0a0a; color: #ef4444; border: 1px solid #ef444433; }
+  /* Reasoning */
+  .scores-panel .reasoning {
+    font-size: 0.7rem; color: #555; line-height: 1.4; font-style: italic;
   }
   .choices { display: flex; flex-direction: column; gap: 1rem; }
   .choice {
@@ -299,26 +354,109 @@ function renderProgress() {
   return `<div class="progress">${dots}</div>`;
 }
 
+function confClass(v) { return v >= 75 ? 'high' : v >= 50 ? 'mid' : 'low'; }
+
 function renderScores() {
   if (!state.scores) return '';
   const s = state.scores;
   const b = s.behavioral || {};
-  const rows = [
-    { label: 'Core type', conf: s.type_confidence, color: '#4a9eff', val: s.top_types?.[0] ? `${s.top_types[0].type}` : '?' },
-    { label: 'Wing', conf: s.wing_confidence, color: '#a855f7', val: s.likely_wing ? `w${s.likely_wing}` : '?' },
-    { label: 'Anger', conf: b.anger_awareness?.confidence || 0, color: '#ef4444', val: b.anger_awareness?.value || '?' },
-    { label: 'Pressure', conf: b.pressure_stance?.confidence || 0, color: '#06b6d4', val: b.pressure_stance?.value || '?' },
-    { label: 'Good day', conf: b.good_day_anchor?.confidence || 0, color: '#f59e0b', val: b.good_day_anchor?.value || '?' },
-    { label: 'Hurt', conf: b.hurt_response?.confidence || 0, color: '#10b981', val: b.hurt_response?.value || '?' },
-    { label: 'Conflict', conf: b.conflict_entry?.confidence || 0, color: '#8b5cf6', val: b.conflict_entry?.value || '?' },
-    { label: 'No demand', conf: b.no_demand_pattern?.confidence || 0, color: '#f97316', val: b.no_demand_pattern?.value || '?' },
+  const topTypes = s.top_types || [];
+  const maxProb = Math.max(...topTypes.map(t => t.probability), 1);
+
+  // Type distribution — build a map for all 9 types
+  const typeMap = {};
+  topTypes.forEach(t => { typeMap[t.type] = t.probability; });
+  const typeCells = [1,2,3,4,5,6,7,8,9].map(n => {
+    const prob = typeMap[n] || 0;
+    const pct = Math.round(prob);
+    // Color intensity based on probability
+    const alpha = Math.max(0.05, prob / 100);
+    const isTop = topTypes[0]?.type === n;
+    const isRunner = topTypes[1]?.type === n;
+    let color, bg, border;
+    if (isTop) {
+      color = '#4a9eff'; bg = `rgba(74,158,255,${alpha * 0.4})`; border = 'rgba(74,158,255,0.4)';
+    } else if (isRunner) {
+      color = '#a78bfa'; bg = `rgba(167,139,250,${alpha * 0.35})`; border = 'rgba(167,139,250,0.3)';
+    } else if (pct >= 10) {
+      color = '#888'; bg = `rgba(255,255,255,${alpha * 0.12})`; border = 'rgba(255,255,255,0.08)';
+    } else {
+      color = '#333'; bg = 'transparent'; border = 'transparent';
+    }
+    const barW = Math.max(10, (prob / maxProb) * 100);
+    const barColor = isTop ? '#4a9eff' : isRunner ? '#a78bfa' : '#333';
+    return `<div class="type-cell" style="background:${bg};border-color:${border}">
+      <div class="tc-num" style="color:${color}">${n}</div>
+      <div class="tc-pct" style="color:${color}">${pct}%</div>
+      <div class="tc-bar" style="width:${barW}%;background:${barColor}"></div>
+    </div>`;
+  }).join('');
+
+  // Confidence badges
+  const tc = s.type_confidence || 0;
+  const wc = s.wing_confidence || 0;
+  const wingLabel = s.likely_wing ? `w${s.likely_wing}` : '?';
+  const confBadges = `<div class="conf-row">
+    <div class="conf-badge"><span class="conf-label">Type</span><span class="conf-val ${confClass(tc)}">${tc}%</span></div>
+    <div class="conf-badge"><span class="conf-label">Wing ${wingLabel}</span><span class="conf-val ${confClass(wc)}">${wc}%</span></div>
+  </div>`;
+
+  // Behavioral signals
+  const dims = [
+    { key: 'anger_awareness', label: 'anger' },
+    { key: 'pressure_stance', label: 'pressure' },
+    { key: 'good_day_anchor', label: 'good day' },
+    { key: 'hurt_response', label: 'hurt' },
+    { key: 'no_demand_pattern', label: 'no demand' },
   ];
-  return `<div class="scores-panel">${rows.map(r => `
-    <div class="score-row">
-      <span class="score-label">${r.label}</span>
-      <div class="score-bar"><div class="score-fill" style="width:${r.conf}%;background:${r.color}"></div></div>
-      <span class="score-val">${r.val} ${r.conf}%</span>
-    </div>`).join('')}
+  const sigRows = dims.map(d => {
+    const sig = b[d.key] || {};
+    const val = sig.value && sig.value !== 'null' ? sig.value : null;
+    const conf = sig.confidence || 0;
+    return `<div class="sig-row">
+      <span class="sig-name">${d.label}</span>
+      <span class="sig-pill ${val ? 'set' : 'unset'}">${val || 'unknown'}</span>
+      <span class="sig-conf">${conf}%</span>
+    </div>`;
+  }).join('');
+
+  // Status: lookalike + contradiction
+  const lc = s.lookalike_check || {};
+  const cc = s.contradiction_check || {};
+  const tags = [];
+  if (state.questionIndex >= 10 && lc.detected_pair && lc.detected_pair !== 'null') {
+    const cls = lc.resolved ? 'ok' : 'warn';
+    tags.push(`<span class="status-tag ${cls}">lookalike: ${lc.detected_pair} (${lc.questions_asked || 0}q${lc.resolved ? ' ✓' : ''})</span>`);
+  }
+  if (cc.contradictions && cc.contradictions.length > 0) {
+    tags.push(`<span class="status-tag bad">contradictions: ${cc.contradictions.join(', ')}</span>`);
+  } else if (cc.passed) {
+    tags.push(`<span class="status-tag ok">no contradictions</span>`);
+  }
+
+  // Reasoning
+  const reasoning = state.lastReasoning
+    ? `<div class="sp-section"><div class="reasoning">${state.lastReasoning}</div></div>`
+    : '';
+
+  return `<div class="scores-panel">
+    <div class="sp-section">
+      <div class="sp-heading">Type distribution</div>
+      <div class="type-grid">${typeCells}</div>
+    </div>
+    <div class="sp-section">
+      <div class="sp-heading">Confidence</div>
+      ${confBadges}
+    </div>
+    <div class="sp-section">
+      <div class="sp-heading">Behavioral signals</div>
+      ${sigRows}
+    </div>
+    <div class="sp-section">
+      <div class="sp-heading">Checks</div>
+      <div class="status-row">${tags.join('') || '<span class="status-tag warn">pending</span>'}</div>
+    </div>
+    ${reasoning}
   </div>`;
 }
 
@@ -368,7 +506,6 @@ function renderQuestion(q, informs) {
 
   content().innerHTML = `
     ${renderProgress()}
-    ${renderScores()}
     <div class="question-num">Question ${qNum}</div>
     ${informsTags ? `<div class="informs-row">${informsTags}</div>` : ''}
     <div class="choices">
@@ -381,6 +518,7 @@ function renderQuestion(q, informs) {
         Report this question
       </button>
     </div>
+    ${renderScores()}
   `;
   document.querySelectorAll('.choice').forEach(el => {
     el.addEventListener('click', () => handleAnswer(el.dataset.pick, q));
@@ -393,8 +531,8 @@ function renderQuestion(q, informs) {
 function renderLoading() {
   content().innerHTML = `
     ${renderProgress()}
-    ${renderScores()}
     <div class="loading">Thinking</div>
+    ${renderScores()}
   `;
 }
 
@@ -417,7 +555,6 @@ function renderResult(result, scores) {
     { label: 'Pressure stance', value: b.pressure_stance?.value },
     { label: 'Good day anchor', value: b.good_day_anchor?.value },
     { label: 'Hurt response', value: b.hurt_response?.value },
-    { label: 'Conflict entry', value: b.conflict_entry?.value },
     { label: 'No demand pattern', value: b.no_demand_pattern?.value },
   ];
   const sigGrid = signals.map(s => `
@@ -495,6 +632,8 @@ function renderResult(result, scores) {
 
   $('#restart').addEventListener('click', () => {
     state = { sessionId: null, name: null, questionIndex: 0, answers: [], messages: [], scores: null, lastInforms: null, lastReasoning: null, questionShownAt: null, done: false, staticQuestions: [], staticAnswers: [] };
+    injectedLookalike = false;
+    injectedWing = false;
     showNameForm();
   });
 }
@@ -513,7 +652,14 @@ async function callLLM(messages) {
   const fenceMatch = text.match(/```(?:json)?\s*\n([\s\S]*?)\n\s*```/i);
   if (fenceMatch) text = fenceMatch[1];
   text = text.trim();
-  return JSON.parse(text);
+  // Fix common LLM JSON mistakes: trailing commas before } or ]
+  text = text.replace(/,\s*([}\]])/g, '$1');
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    console.error('JSON parse failed at:', e.message, '\nRaw text:', text);
+    throw e;
+  }
 }
 
 async function handleStaticAnswer(pick, sq) {
@@ -559,7 +705,7 @@ async function handleStaticAnswer(pick, sq) {
 
   state.messages = [{
     role: 'user',
-    content: `Here are the person's answers to 5 calibration questions with structured weak-prior metadata:\n\n${summary}\n\nTreat calibration items as weak priors only, not conclusions. Form tentative hypotheses, identify the top unresolved type ambiguities, and ask the single next forced-choice question that best discriminates them.`
+    content: `The person's name is ${state.name}. Here are their answers to 5 calibration questions with structured weak-prior metadata:\n\n${summary}\n\nIMPORTANT: Calibration answers set behavioral signal readings ONLY. They must NOT be used to eliminate or significantly lower any type. Many types present atypically on these dimensions. Start with a roughly even distribution across all 9 types (no type below 8%) and let only adaptive questions move type probabilities. You have 15 adaptive questions remaining (20 max total). Ask broad questions that cut across triads and stances.`
   }];
 
   try {
@@ -573,6 +719,111 @@ async function handleStaticAnswer(pick, sq) {
     log('Error: ' + err.message);
     content().innerHTML = `<div class="loading" style="color:#ff4a4a">Error: ${err.message}. Refresh to retry.</div>`;
   }
+}
+
+// Known lookalike pairs
+const LOOKALIKE_PAIRS = [
+  [5,9],[9,2],[6,9],[1,6],[9,7],[2,9],[4,6],[3,7],[3,8],[6,8],[1,8]
+];
+
+const LOOKALIKE_TABLE = `## Lookalike Pair Disambiguation
+
+Your top 2 types form a known lookalike pair. You MUST ask 2-3 targeted questions using the splitting dimensions below BEFORE proposing done.
+
+| Pair | Splitting Dimensions | What to probe |
+|------|---------------------|---------------|
+| 5 vs 9 | inner_activity, intellectual_identity | 5 withdraws INTO a rich mental world; 9 withdraws into blankness/comfort. 5 hoards knowledge; 9 diffuses attention |
+| 9 vs 2 | initiation_direction, helping_motivation | 2 moves toward people proactively; 9 waits to be drawn in. 2 needs to be needed; 9 helps to keep peace |
+| 6 vs 9 | anxiety_style, inner_narrative | 6 actively worries and scans for threats; 9 avoids thinking about the problem entirely |
+| 1 vs 6 | authority_source, self_criticism_flavor | 1 has an internal standard they enforce; 6 looks to external authority/frameworks for guidance |
+| 9 vs 7 | energy_direction, pain_response | 7 accelerates toward more stimulation; 9 settles into what's already there. 7 reframes pain; 9 numbs it |
+| 2 vs 9 | self_erasure_style, anger_awareness | 2 erases self FOR others (martyrdom); 9 erases self to MERGE with others (disappearing). 2 feels anger then suppresses; 9 barely registers it |
+| 4 vs 6 | identity_relationship, emotional_source | 4's emotions come from identity/uniqueness; 6's emotions come from security/loyalty concerns |
+| 3 vs 7 | image_vs_experience, failure_response | 3 curates how others see them; 7 doesn't care about image, just wants the next experience |
+| 3 vs 8 | vulnerability_under_pressure, motivation | 3 becomes more polished under pressure; 8 becomes more raw. 3 wants admiration; 8 wants control |
+| 6 vs 8 | counterphobic_test, vulnerability_visibility | Counterphobic 6 acts tough but has underlying doubt; 8 has genuine certainty. Ask about what happens AFTER the confrontation |
+| 1 vs 8 | anger_relationship, authority_source | 1 suppresses anger into righteous criticism and follows internal standards; 8 feels anger immediately and uses it as fuel. 1 obeys rules even when costly; 8 makes their own rules |`;
+
+const WING_TABLE = `## Wing Splitting Guide
+
+You now need to discriminate wings. Ask at least one question targeting the wing split.
+
+| Type | Lower wing | Higher wing | How to split |
+|------|-----------|-------------|-------------|
+| 1 | 1w9: reserved and principled. Anger is cold and controlled | 1w2: warmer and more people-focused. Anger comes with disappointment in others | Does frustration make them withdraw into standards or reach out to correct people? |
+| 2 | 2w1: principled helper. Gives with conditions and quiet resentment | 2w3: charming helper. Gives to be seen and appreciated | Is the helping driven by duty or by desire for connection and recognition? |
+| 3 | 3w2: warm and interpersonal. Success means being admired by people | 3w4: introspective and aesthetic. Success means being unique and excellent | Do they perform for the audience or for an inner standard of distinction? |
+| 4 | 4w3: expressive and ambitious. Wants to stand out through achievement | 4w5: private and cerebral. Wants depth and understanding over recognition | Does their intensity push outward into expression or inward into analysis? |
+| 5 | 5w4: imaginative and emotionally intense underneath. Drawn to meaning | 5w6: systematic and loyal. Drawn to frameworks and trusted groups | Does solitude feed creativity and feeling or does it feed structure and preparation? |
+| 6 | 6w5: withdrawn and cerebral. Manages anxiety through knowledge and analysis | 6w7: outgoing and scattered. Manages anxiety through activity and humor | Do they cope with doubt by researching or by staying busy and social? |
+| 7 | 7w6: social and anxious underneath. Fun masks worry | 7w8: assertive and intense. Fun is pursued with force | Is there nervous energy under the enthusiasm or aggressive energy? |
+| 8 | 8w7: expansive and stimulation-seeking. Wants more of everything | 8w9: grounded and steady. Power is quiet and immovable | Does their force push outward into new territory or settle into holding ground? |
+| 9 | 9w8: stubborn and grounded. Has a quiet force that emerges when pushed | 9w1: principled and orderly. Has quiet opinions about right and wrong | When pushed does passive resistance have an edge to it or a moral tone? |`;
+
+let injectedLookalike = false;
+let injectedWing = false;
+
+// Expected behavioral profiles per type
+const TYPE_PROFILES = {
+  1: { anger_awareness:'immediate', pressure_stance:'engage', good_day_anchor:'performance', hurt_response:'containment', no_demand_pattern:'inquiry' },
+  2: { anger_awareness:'delayed', pressure_stance:'engage', good_day_anchor:'relational', hurt_response:'contact_seeking', no_demand_pattern:'settling' },
+  3: { anger_awareness:'delayed', pressure_stance:'engage', good_day_anchor:'performance', hurt_response:'containment', no_demand_pattern:'inquiry' },
+  4: { anger_awareness:'delayed', pressure_stance:'ease_back', good_day_anchor:'performance', hurt_response:'contact_seeking', no_demand_pattern:'inquiry' },
+  5: { anger_awareness:'delayed', pressure_stance:'ease_back', good_day_anchor:'performance', hurt_response:'containment', no_demand_pattern:'inquiry' },
+  6: { anger_awareness:'immediate', pressure_stance:'engage', good_day_anchor:'relational', hurt_response:'contact_seeking', no_demand_pattern:'inquiry' },
+  7: { anger_awareness:'delayed', pressure_stance:'engage', good_day_anchor:'performance', hurt_response:'containment', no_demand_pattern:'inquiry' },
+  8: { anger_awareness:'immediate', pressure_stance:'engage', good_day_anchor:'performance', hurt_response:'containment', no_demand_pattern:'inquiry' },
+  9: { anger_awareness:'delayed', pressure_stance:'ease_back', good_day_anchor:'relational', hurt_response:'containment', no_demand_pattern:'settling' }
+};
+
+function checkGates(scores, questionCount) {
+  const failures = [];
+
+  // Gate 1: type confidence
+  if ((scores.type_confidence || 0) < 90)
+    failures.push(`type_confidence is ${scores.type_confidence}, needs >= 90`);
+
+  // Gate 2: wing confidence
+  if ((scores.wing_confidence || 0) < 75)
+    failures.push(`wing_confidence is ${scores.wing_confidence}, needs >= 75`);
+
+  // Gate 3: behavioral signal coverage
+  const b = scores.behavioral || {};
+  const dims = ['anger_awareness','pressure_stance','good_day_anchor','hurt_response','no_demand_pattern'];
+  const strongSignals = dims.filter(d => (b[d]?.confidence || 0) >= 60).length;
+  if (strongSignals < 4)
+    failures.push(`only ${strongSignals}/5 behavioral signals >= 60 confidence, needs >= 4`);
+
+  // Gate 4: behavioral contradiction check
+  const declaredType = scores.top_types?.[0]?.type;
+  if (declaredType && TYPE_PROFILES[declaredType]) {
+    const expected = TYPE_PROFILES[declaredType];
+    const contradictions = dims.filter(d => {
+      const val = b[d]?.value;
+      return val && val !== 'null' && expected[d] && val !== expected[d];
+    });
+    if (contradictions.length >= 2)
+      failures.push(`2+ behavioral contradictions for type ${declaredType}: ${contradictions.join(', ')}`);
+  }
+
+  // Gate 5: lookalike pair disambiguation
+  const top2 = (scores.top_types || []).slice(0, 2).map(t => t.type);
+  if (top2.length === 2) {
+    const isPair = LOOKALIKE_PAIRS.some(([a,b]) =>
+      (top2[0]===a && top2[1]===b) || (top2[0]===b && top2[1]===a)
+    );
+    if (isPair) {
+      const lc = scores.lookalike_check || {};
+      if (!lc.resolved || (lc.questions_asked || 0) < 2)
+        failures.push(`lookalike pair ${top2[0]} vs ${top2[1]} detected but not disambiguated (${lc.questions_asked || 0} questions asked, need >= 2)`);
+    }
+  }
+
+  // Gate 6: minimum questions
+  if (questionCount < 10)
+    failures.push(`only ${questionCount} questions asked, minimum is 10`);
+
+  return failures;
 }
 
 async function handleAnswer(pick, question) {
@@ -596,42 +847,128 @@ async function handleAnswer(pick, question) {
 
   renderLoading();
 
+  // Build gate status feedback
+  const remaining = 20 - state.questionIndex;
+  let gateStatus = '';
+  if (state.scores) {
+    const gf = checkGates(state.scores, state.questionIndex);
+
+    // Floor rule enforcement and untested type tracking
+    let floorWarning = '';
+    if (state.scores.top_types) {
+      const floorTypes = state.scores.top_types.filter(t => t.probability <= 3).map(t => t.type);
+      const missing = [1,2,3,4,5,6,7,8,9].filter(n => !state.scores.top_types.find(t => t.type === n));
+      const untested = [...new Set([...floorTypes, ...missing])].sort();
+
+      if (state.questionIndex < 10) {
+        const belowFloor = [1,2,3,4,5,6,7,8,9].filter(n => {
+          const t = state.scores.top_types.find(t => t.type === n);
+          return !t || t.probability < 3;
+        });
+        if (belowFloor.length > 0) {
+          floorWarning = `\n\nFLOOR RULE VIOLATION: Types ${belowFloor.join(', ')} are below 3% before question 10. You MUST keep all 9 types at minimum 3% until question 10.`;
+        }
+      }
+
+      if (untested.length > 0) {
+        floorWarning += `\n\nUntested types (at floor or missing): ${untested.join(', ')}. Prioritize a question that could move these.`;
+      }
+    }
+
+    if (gf.length > 0) {
+      gateStatus = `\n\nGate status (${gf.length} failing):\n${gf.map(f => '- ' + f).join('\n')}${floorWarning}\n\nQuestions remaining: ${remaining}. Budget wisely.`;
+    } else {
+      gateStatus = `\n\nAll gates passing. ${remaining} questions remaining. You may propose done.`;
+    }
+  } else {
+    gateStatus = `\n\n${remaining} questions remaining.`;
+  }
+
+  // Inject lookalike table when: Q10+ and top 2 form a known pair
+  let injections = '';
+  if (state.questionIndex >= 10 && state.scores?.top_types && !injectedLookalike) {
+    const top2 = state.scores.top_types.slice(0, 2).map(t => t.type);
+    const isPair = LOOKALIKE_PAIRS.some(([a,b]) =>
+      (top2[0]===a && top2[1]===b) || (top2[0]===b && top2[1]===a)
+    );
+    if (isPair) {
+      injections += '\n\n' + LOOKALIKE_TABLE;
+      injectedLookalike = true;
+    }
+  }
+
+  // Inject wing table when: type_confidence >= 75 and wing not yet injected
+  if (state.scores && (state.scores.type_confidence || 0) >= 75 && !injectedWing) {
+    injections += '\n\n' + WING_TABLE;
+    injectedWing = true;
+  }
+
   state.messages.push({
     role: 'user',
-    content: `User picked ${pick.toUpperCase()}: "${chosen.text}" (over: "${unchosen.text}"). Response time: ${(responseTimeMs/1000).toFixed(1)}s. Generate the next question or finalize.`
+    content: `Picked ${pick.toUpperCase()}: "${chosen.text}". Response time: ${(responseTimeMs/1000).toFixed(1)}s.${gateStatus}${injections}`
   });
 
   try {
-    const response = await callLLM(state.messages);
-
+    let response = await callLLM(state.messages);
     state.messages.push({ role: 'assistant', content: JSON.stringify(response) });
     state.scores = response.scores || null;
     state.lastInforms = response.informs || null;
     state.lastReasoning = response.reasoning || null;
 
-    if (response.status === 'done' || state.questionIndex >= 20) {
-      state.done = true;
+    // Gate checker: LLM proposes done, we validate
+    if (response.status === 'proposing_done' || response.status === 'done') {
+      const gateFailures = checkGates(response.scores || {}, state.questionIndex);
 
-      const result = response.result || {
-        type: response.scores?.top_types?.[0]?.type || 0,
-        wing: response.scores?.likely_wing || 0,
-        wing_name: response.scores?.top_types?.[0]
-          ? `${response.scores.top_types[0].type}w${response.scores.likely_wing || '?'}`
-          : 'Unknown',
-        summary: 'Max questions reached. Result based on accumulated scores.'
-      };
+      if (gateFailures.length === 0 || state.questionIndex >= 20) {
+        // Gates pass (or max questions hit) — approve
+        state.done = true;
+        log('GATES PASSED: all conditions met');
 
-      api('POST', '/api/sessions/complete', {
-        session_id: state.sessionId,
-        question_count: state.questionIndex,
-        guessed_type: result.type,
-        guessed_wing: result.wing,
-        guessed_wing_name: result.wing_name,
-        guessed_summary: result.summary,
-        final_scores: response.scores
-      });
+        const result = response.result || {
+          type: response.scores?.top_types?.[0]?.type || 0,
+          wing: response.scores?.likely_wing || 0,
+          wing_name: response.scores?.top_types?.[0]
+            ? `${response.scores.top_types[0].type}w${response.scores.likely_wing || '?'}`
+            : 'Unknown',
+          summary: 'Max questions reached. Result based on accumulated scores.'
+        };
 
-      renderResult(result, response.scores);
+        api('POST', '/api/sessions/complete', {
+          session_id: state.sessionId,
+          question_count: state.questionIndex,
+          guessed_type: result.type,
+          guessed_wing: result.wing,
+          guessed_wing_name: result.wing_name,
+          guessed_summary: result.summary,
+          final_scores: response.scores
+        });
+
+        renderResult(result, response.scores);
+      } else {
+        // Gates fail — reject and tell LLM to keep going
+        const rejection = `GATE CHECK FAILED. Your proposal to finalize was rejected. Failed gates:\n${gateFailures.map(f => '- ' + f).join('\n')}\n\nAddress these gaps. Ask the next question.`;
+        log('GATES REJECTED: ' + gateFailures.join('; '));
+
+        state.messages.push({ role: 'user', content: rejection });
+
+        const retry = await callLLM(state.messages);
+        state.messages.push({ role: 'assistant', content: JSON.stringify(retry) });
+        state.scores = retry.scores || null;
+        state.lastInforms = retry.informs || null;
+        state.lastReasoning = retry.reasoning || null;
+
+        if (retry.question) {
+          renderQuestion(retry.question, retry.informs);
+        } else {
+          // LLM didn't provide a question after rejection — force continue
+          log('LLM did not provide question after rejection');
+          state.messages.push({ role: 'user', content: 'You must ask a question. Provide a forced-choice question targeting the failed gates.' });
+          const force = await callLLM(state.messages);
+          state.messages.push({ role: 'assistant', content: JSON.stringify(force) });
+          state.scores = force.scores || null;
+          renderQuestion(force.question, force.informs);
+        }
+      }
     } else {
       renderQuestion(response.question, response.informs);
     }

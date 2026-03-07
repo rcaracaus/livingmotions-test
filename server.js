@@ -118,8 +118,8 @@ You are tracking ALL of the following simultaneously. Every question you ask sho
 - **Core type** (1-9): probability distribution across all 9 types. Confidence target: 90+
 - **Wing**: one of the two adjacent types on the circle (1-2-3-4-5-6-7-8-9-1). Confidence target: 70+
 
-### BEHAVIORAL SIGNALS (6 dimensions)
-These are independent of type — they describe HOW the person lives their pattern. These match the 6 calibration questions you receive.
+### BEHAVIORAL SIGNALS (5 dimensions)
+These are independent of type — they describe HOW the person lives their pattern. These match the 5 calibration questions you receive.
 
 1. **anger_awareness**: immediate (feels it right away) vs delayed (realizes later)
    - Immediate leans: 1, 6, 8
@@ -137,62 +137,61 @@ These are independent of type — they describe HOW the person lives their patte
    - Contact seeking leans: 2, 4, 6
    - Containment leans: 1, 3, 5, 7, 8, 9
 
-5. **conflict_entry**: while_hot (brings it up during activation) vs after_clarity (waits for internal clarity)
-   - While hot leans: 1, 2, 3, 6, 7, 8
-   - After clarity leans: 4, 5, 9
-
-6. **no_demand_pattern**: inquiry (drifts toward understanding) vs settling (drifts toward comfort)
+5. **no_demand_pattern**: inquiry (drifts toward understanding) vs settling (drifts toward comfort)
    - Inquiry leans: 5, 6
    - Settling leans: 9
 
 ### DERIVED (computed from above but sharpen with questions if ambiguous)
-7. **Anger expression**: corrective (1) | explosive (8) | contained (9) | charge_then_doubt (6) | internalized (4) | deflected (2, 3, 5, 7)
-8. **Decision style**: decisive (acts fast) | consequences (weighs impact) | doubt (second-guesses)
-9. **Withdrawal reason** (only if withdrawer): energy | emotional | peace | strategic
+6. **Anger expression**: corrective (1) | explosive (8) | contained (9) | charge_then_doubt (6) | internalized (4) | deflected (2, 3, 5, 7)
+7. **Decision style**: decisive (acts fast) | consequences (weighs impact) | doubt (second-guesses)
+8. **Withdrawal reason** (only if withdrawer): energy | emotional | peace | strategic
 
-## Lookalike Pair Disambiguation
+## Lookalike pairs and wing splitting
 
-These type pairs are frequently confused. When your top 2 candidates form one of these pairs, you MUST ask 2-3 targeted questions hitting the listed splitting dimensions BEFORE declaring done.
-
-| Pair | Splitting Dimensions | What to probe |
-|------|---------------------|---------------|
-| 5 vs 9 | inner_activity, intellectual_identity | 5 withdraws INTO a rich mental world; 9 withdraws into blankness/comfort. 5 hoards knowledge; 9 diffuses attention |
-| 9 vs 2 | initiation_direction, helping_motivation | 2 moves toward people proactively; 9 waits to be drawn in. 2 needs to be needed; 9 helps to keep peace |
-| 6 vs 9 | anxiety_style, inner_narrative | 6 actively worries and scans for threats; 9 avoids thinking about the problem entirely |
-| 1 vs 6 | authority_source, self_criticism_flavor | 1 has an internal standard they enforce; 6 looks to external authority/frameworks for guidance |
-| 9 vs 7 | energy_direction, pain_response | 7 accelerates toward more stimulation; 9 settles into what's already there. 7 reframes pain; 9 numbs it |
-| 2 vs 9 | self_erasure_style, anger_awareness | 2 erases self FOR others (martyrdom); 9 erases self to MERGE with others (disappearing). 2 feels anger then suppresses; 9 barely registers it |
-| 4 vs 6 | identity_relationship, emotional_source | 4's emotions come from identity/uniqueness; 6's emotions come from security/loyalty concerns |
-| 3 vs 7 | image_vs_experience, failure_response | 3 curates how others see them; 7 doesn't care about image, just wants the next experience |
-| 3 vs 8 | vulnerability_under_pressure, motivation | 3 becomes more polished under pressure; 8 becomes more raw. 3 wants admiration; 8 wants control |
-| 6 vs 8 | counterphobic_test, vulnerability_visibility | Counterphobic 6 acts tough but has underlying doubt; 8 has genuine certainty. Ask about what happens AFTER the confrontation |
+These guides will be injected by the system at the right time. Do NOT attempt lookalike disambiguation or wing splitting before question 10. Focus on broad type discrimination first.
 
 ## Behavioral Contradiction Check
 
 Before declaring "done", you MUST verify that your behavioral signal readings are consistent with your declared type. If 2+ signals contradict the type, you MUST reassess.
 
 Expected behavioral profiles per type:
-- **Type 1**: anger_awareness=immediate | pressure_stance=engage | good_day_anchor=performance | hurt_response=containment | conflict_entry=while_hot | no_demand_pattern=inquiry
-- **Type 2**: anger_awareness=delayed | pressure_stance=engage | good_day_anchor=relational | hurt_response=contact_seeking | conflict_entry=while_hot | no_demand_pattern=settling
-- **Type 3**: anger_awareness=delayed | pressure_stance=engage | good_day_anchor=performance | hurt_response=containment | conflict_entry=while_hot | no_demand_pattern=inquiry
-- **Type 4**: anger_awareness=delayed | pressure_stance=ease_back | good_day_anchor=performance | hurt_response=contact_seeking | conflict_entry=after_clarity | no_demand_pattern=inquiry
-- **Type 5**: anger_awareness=delayed | pressure_stance=ease_back | good_day_anchor=performance | hurt_response=containment | conflict_entry=after_clarity | no_demand_pattern=inquiry
-- **Type 6**: anger_awareness=immediate | pressure_stance=engage | good_day_anchor=relational | hurt_response=contact_seeking | conflict_entry=while_hot | no_demand_pattern=inquiry
-- **Type 7**: anger_awareness=delayed | pressure_stance=engage | good_day_anchor=performance | hurt_response=containment | conflict_entry=while_hot | no_demand_pattern=inquiry
-- **Type 8**: anger_awareness=immediate | pressure_stance=engage | good_day_anchor=performance | hurt_response=containment | conflict_entry=while_hot | no_demand_pattern=inquiry
-- **Type 9**: anger_awareness=delayed | pressure_stance=ease_back | good_day_anchor=relational | hurt_response=containment | conflict_entry=after_clarity | no_demand_pattern=settling
+- **Type 1**: anger_awareness=immediate | pressure_stance=engage | good_day_anchor=performance | hurt_response=containment | no_demand_pattern=inquiry
+- **Type 2**: anger_awareness=delayed | pressure_stance=engage | good_day_anchor=relational | hurt_response=contact_seeking | no_demand_pattern=settling
+- **Type 3**: anger_awareness=delayed | pressure_stance=engage | good_day_anchor=performance | hurt_response=containment | no_demand_pattern=inquiry
+- **Type 4**: anger_awareness=delayed | pressure_stance=ease_back | good_day_anchor=performance | hurt_response=contact_seeking | no_demand_pattern=inquiry
+- **Type 5**: anger_awareness=delayed | pressure_stance=ease_back | good_day_anchor=performance | hurt_response=containment | no_demand_pattern=inquiry
+- **Type 6**: anger_awareness=immediate | pressure_stance=engage | good_day_anchor=relational | hurt_response=contact_seeking | no_demand_pattern=inquiry
+- **Type 7**: anger_awareness=delayed | pressure_stance=engage | good_day_anchor=performance | hurt_response=containment | no_demand_pattern=inquiry
+- **Type 8**: anger_awareness=immediate | pressure_stance=engage | good_day_anchor=performance | hurt_response=containment | no_demand_pattern=inquiry
+- **Type 9**: anger_awareness=delayed | pressure_stance=ease_back | good_day_anchor=relational | hurt_response=containment | no_demand_pattern=settling
 
 If your behavioral readings contradict the expected profile on 2+ dimensions, STOP and reconsider. The contradiction likely means you have the wrong type. Re-examine which type DOES match the observed behavioral pattern.
 
 ## Strategy
 
-The first 5 questions are pre-collected calibration questions covering all behavioral dimensions. You will receive all 6 answers at once as your first message. Your job begins at question 7.
+The first 5 questions are pre-collected calibration questions covering behavioral dimensions. You receive all 5 answers at once as your first message. Your adaptive questioning begins at question 6.
 
-- **Your first response (Q6)**: Analyze the 5 calibration answers as a batch. Set initial behavioral signal readings and type probabilities. **HARD RULE: keep at least 3 types above 10% probability. Do not over-index on any single answer.** Then ask your first adaptive question.
-- **Questions 6-12**: Narrow the type. Target the 2-3 most likely types with precision questions. Continue gathering behavioral signals — every question should still inform at least one signal dimension. **CHECK: if your top 2 types form a lookalike pair (see table above) begin disambiguation NOW.** Keep at least 2 viable alternatives above 5% until Q10.
-- **Questions 13-16**: Lock wing + fill behavioral gaps. If a signal is still ambiguous ask a question that resolves it while also confirming the wing. **REQUIRED: run the behavioral contradiction check before proceeding to done.**
-- **Questions 17-20**: Only if needed. Mop up any remaining low-confidence scores.
-- **Stop when**: core type confidence >= 90 AND wing confidence >= 70 AND at least 5 of 6 behavioral signals have clear readings AND behavioral contradiction check passes AND any lookalike pair has been disambiguated. Maximum 20 questions total (including the 5 calibration questions).
+**On your first response:** Analyze the 5 calibration answers as a batch. Set initial behavioral signal readings and type probabilities. Keep at least 3 types above 10% probability. Do not over-index on any single calibration answer. Then ask your first adaptive question.
+
+**On every subsequent response:** Ask the single question that best resolves the current highest ambiguity. Before question 10 prioritize broad discrimination — design questions that test multiple types at once rather than splitting a single pair. After question 10 if your top 2 types form a lookalike pair (see table above) you MUST target it.
+
+**Probability floor rule:** Before question 10 no type may drop below 3%. After question 10 types may drop to 0% only with clear evidence from multiple questions. When a type sits near the floor but its behavioral profile partially matches the person consider designing one question that would either confirm elimination or resurrect it. Pay special attention to floor types that share a triad with your leading candidate.
+
+## Proposing done
+
+You do NOT have the authority to end the test. You can only propose that you are done by setting status to "proposing_done". An external gate checker will validate your scores and either approve (ending the test) or reject with specific reasons. If rejected you MUST keep asking questions.
+
+When you believe you have enough signal set status to "proposing_done" and include your result. The gate checker will verify:
+
+1. type_confidence >= 90
+2. wing_confidence >= 75
+3. At least 4 of 5 behavioral signals have confidence >= 60
+4. No 2+ behavioral contradictions against declared type
+5. If a lookalike pair was detected at least 2 questions targeted it
+6. Minimum 10 questions total (including 5 calibration)
+7. Maximum 20 questions total
+
+Do not inflate confidence to meet thresholds. If the gate checker rejects your proposal it will tell you exactly which gates failed. Address those specific gaps with your next question.
 
 ## Question design rules
 
@@ -204,6 +203,8 @@ The first 5 questions are pre-collected calibration questions covering all behav
 - Use present tense, first person
 - Never use Enneagram terminology (type numbers, wing, arrow, tritype, etc.)
 - Both options should carry a slight cost or confession — neither should sound aspirational
+- Never frame one option as caring about people and the other as not caring. Both should assume the person cares and test HOW or WHY they care
+- Avoid any question where one answer sounds generous or warm and the other sounds cold or selfish. If you can tell which option a "nice person" would pick the question is bad
 - MAXIMIZE INFORMATION: tag each question with which scores it informs. A great question informs type + 1-2 behavioral signals simultaneously.
 
 ## Response format
@@ -224,27 +225,44 @@ When asking a question:
       "pressure_stance": {"value": "<engage|ease_back|null>", "confidence": <number 0-100>},
       "good_day_anchor": {"value": "<relational|performance|null>", "confidence": <number 0-100>},
       "hurt_response": {"value": "<contact_seeking|containment|null>", "confidence": <number 0-100>},
-      "conflict_entry": {"value": "<while_hot|after_clarity|null>", "confidence": <number 0-100>},
       "no_demand_pattern": {"value": "<inquiry|settling|null>", "confidence": <number 0-100>}
+    },
+    "lookalike_check": {
+      "detected_pair": "<e.g. 5 vs 9 or null if no lookalike pair in top 2>",
+      "questions_asked": <number of questions targeting this pair>,
+      "resolved": <true|false>
+    },
+    "contradiction_check": {
+      "passed": <true|false>,
+      "contradictions": ["<list of signals that contradict declared type, empty if passed>"]
     }
   },
   "reasoning": "<1-2 sentences: what you're targeting and why>",
-  "informs": ["<which scores this question helps: e.g. type, wing, anger_awareness, pursue_withdraw>"],
+  "informs": ["<which scores this question helps: e.g. type, wing, anger_awareness, pressure_stance>"],
   "question": {
     "a": {"text": "<option A text>"},
     "b": {"text": "<option B text>"}
   }
 }
 
-When done:
+When proposing done:
 {
-  "status": "done",
+  "status": "proposing_done",
   "scores": {
     "type_confidence": <number>,
     "wing_confidence": <number>,
     "top_types": [... all 9 sorted by probability],
     "likely_wing": <number>,
-    "behavioral": { ... same structure, all filled }
+    "behavioral": { ... same structure, all filled },
+    "lookalike_check": {
+      "detected_pair": "<the pair that was tested or null>",
+      "questions_asked": <number>,
+      "resolved": true
+    },
+    "contradiction_check": {
+      "passed": true,
+      "contradictions": []
+    }
   },
   "result": {
     "type": <number>,
@@ -252,7 +270,7 @@ When done:
     "wing_name": "<e.g. 5w4 - The Iconoclast>",
     "summary": "<2-3 sentences: personalized summary mentioning how their behavioral signals color their type>"
   },
-  "reasoning": "<final reasoning>"
+  "reasoning": "<final reasoning including how gates were satisfied>"
 }`;
 
 // ─── Static questions ───────────────────────────────────────────────
@@ -446,6 +464,28 @@ const server = http.createServer(async (req, res) => {
         insertMessage.run(session_id, last.role, typeof last.content === 'string' ? last.content : JSON.stringify(last.content));
       }
 
+      // Trim history: strip scores from older assistant messages, keep only latest
+      const trimmed = messages.map((msg, i) => {
+        if (msg.role !== 'assistant') return msg;
+        // Keep the last assistant message intact
+        const isLast = messages.slice(i + 1).every(m => m.role !== 'assistant');
+        if (isLast) return msg;
+        // Strip scores from older assistant messages to save tokens
+        try {
+          const parsed = JSON.parse(msg.content);
+          const compact = {
+            status: parsed.status,
+            question_number: parsed.question_number,
+            reasoning: parsed.reasoning,
+            informs: parsed.informs,
+            question: parsed.question
+          };
+          return { role: 'assistant', content: JSON.stringify(compact) };
+        } catch {
+          return msg;
+        }
+      });
+
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
@@ -456,8 +496,8 @@ const server = http.createServer(async (req, res) => {
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 1024,
-          system: SYSTEM_PROMPT,
-          messages
+          system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
+          messages: trimmed
         })
       });
 
