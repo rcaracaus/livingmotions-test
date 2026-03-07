@@ -1,17 +1,17 @@
 {
   "name": "livingmotions-test",
-  "version": "1.0.0",
-  "description": "",
+  "version": "2.0.0",
+  "description": "Adaptive Enneagram typing engine",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "node server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "better-sqlite3": "^12.6.2"
+    "@libsql/client": "^0.14.0"
   }
 }
