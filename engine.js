@@ -674,11 +674,30 @@ function isLookalikePair(a, b) {
   return !!PAIR_AXES[key];
 }
 
+// ─── Pair Signal Override ────────────────────────────────────────────
+// Never trust the LLM's predicted_signal_a/b for pair questions.
+// For pair "XvY", option A always signals [X], option B always signals [Y].
+
+function derivePairSignals(pair) {
+  if (!pair) return null;
+  const match = pair.match(/^(\d)v(\d)$/);
+  if (!match) return null;
+  const typeA = parseInt(match[1]);
+  const typeB = parseInt(match[2]);
+  if (!PAIR_AXES[pair]) return null;
+  return { signal_a: [typeA], signal_b: [typeB] };
+}
+
 // ─── Record Question ────────────────────────────────────────────────
 
 function recordQuestion(state, questionData) {
   state.question_number++;
   state.budget_remaining--;
+
+  // For pair questions, override LLM signals with known pair types
+  const pairSignals = derivePairSignals(questionData.pair);
+  const signal_a = pairSignals ? pairSignals.signal_a : (questionData.predicted_signal_a || []);
+  const signal_b = pairSignals ? pairSignals.signal_b : (questionData.predicted_signal_b || []);
 
   state.question_history.push({
     question_number: state.question_number,
@@ -687,8 +706,8 @@ function recordQuestion(state, questionData) {
     domain: questionData.domain || null,
     option_a: questionData.option_a,
     option_b: questionData.option_b,
-    predicted_signal_a: questionData.predicted_signal_a || [],
-    predicted_signal_b: questionData.predicted_signal_b || [],
+    predicted_signal_a: signal_a,
+    predicted_signal_b: signal_b,
     picked: null,
     answer_text: null
   });
@@ -894,6 +913,7 @@ module.exports = {
   getTopPair,
   getPairKey,
   isLookalikePair,
+  derivePairSignals,
   recordQuestion,
   recordAnswer,
   checkCandidate,
