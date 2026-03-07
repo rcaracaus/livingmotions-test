@@ -24,6 +24,13 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (req.method === 'GET' && (req.url === '/dashboard' || req.url === '/dashboard.html')) {
+    const html = fs.readFileSync(path.join(__dirname, 'public', 'dashboard.html'), 'utf8');
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(html);
+    return;
+  }
+
   // Delegate everything else to the shared handler
   try {
     await handler(req, res);

@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Living Motions Dashboard</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #0a0a0a; color: #e0e0e0;
+  min-height: 100vh; display: flex;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  width: 250px; min-width: 250px; background: #0d0d0d;
+  border-right: 1px solid #1a1a1a; display: flex; flex-direction: column;
+  height: 100vh; position: fixed; left: 0; top: 0; z-index: 10;
+}
+.sidebar-title {
+  padding: 1.5rem 1.2rem 1rem; font-size: 1rem; font-weight: 600;
+  color: #4a9eff; letter-spacing: 0.05em; border-bottom: 1px solid #1a1a1a;
+}
+.sidebar-sessions {
+  flex: 1; overflow-y: auto; padding: 0.5rem;
+}
+.sidebar-sessions::-webkit-scrollbar { width: 4px; }
+.sidebar-sessions::-webkit-scrollbar-track { background: transparent; }
+.sidebar-sessions::-webkit-scrollbar-thumb { background: #222; border-radius: 2px; }
+
+.session-card {
+  padding: 0.7rem 0.8rem; border-radius: 8px; cursor: pointer;
+  border: 1px solid transparent; margin-bottom: 4px; transition: all 0.15s;
+}
+.session-card:hover { background: #111; border-color: #222; }
+.session-card.active { border-color: #4a9eff; background: #0d1520; }
+.session-card .sc-name { font-size: 0.85rem; color: #e0e0e0; margin-bottom: 2px; }
+.session-card .sc-meta {
+  font-size: 0.7rem; color: #555; font-family: monospace;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.session-card .sc-type {
+  font-size: 0.7rem; font-family: monospace; color: #4a9eff; font-weight: 600;
+}
+
+.sidebar-footer {
+  padding: 1rem 1.2rem; border-top: 1px solid #1a1a1a;
+}
+.sidebar-footer a {
+  color: #555; text-decoration: none; font-size: 0.8rem; transition: color 0.15s;
+}
+.sidebar-footer a:hover { color: #4a9eff; }
+
+/* ── Main Content ── */
+.main {
+  margin-left: 250px; flex: 1; padding: 2rem 2.5rem;
+  min-height: 100vh; overflow-y: auto;
+}
+.main-empty {
+  display: flex; align-items: center; justify-content: center;
+  height: 80vh; color: #333; font-size: 0.95rem;
+}
+
+/* ── Cards ── */
+.card {
+  background: #111; border: 1px solid #1a1a1a; border-radius: 12px;
+  padding: 1.5rem; margin-bottom: 1.5rem;
+}
+.card h2 {
+  font-size: 1rem; font-weight: 500; color: #e0e0e0; margin-bottom: 1rem;
+  padding-bottom: 0.5rem; border-bottom: 1px solid #1a1a1a;
+}
+.card h3 {
+  font-size: 0.85rem; font-weight: 400; color: #888; margin-bottom: 0.75rem;
+}
+
+/* ── Profile Header ── */
+.profile-header {
+  font-size: 1.3rem; font-weight: 300; color: #e0e0e0; margin-bottom: 1.5rem;
+}
+.profile-header .ph-type { color: #4a9eff; font-weight: 500; }
+
+/* ── Posterior Bars ── */
+.posterior-bars { margin-bottom: 1rem; }
+.post-row {
+  display: flex; align-items: center; margin-bottom: 6px; font-size: 0.8rem;
+}
+.post-row .pr-label {
+  width: 55px; font-family: monospace; color: #555; flex-shrink: 0;
+}
+.post-row .pr-bar-bg {
+  flex: 1; height: 6px; background: #1a1a1a; border-radius: 3px;
+  margin: 0 10px; overflow: hidden;
+}
+.post-row .pr-bar-fill {
+  height: 100%; border-radius: 3px; transition: width 0.5s;
+}
+.post-row .pr-pct {
+  width: 40px; text-align: right; font-family: monospace; color: #555;
+}
+.post-row.top .pr-label { color: #4a9eff; }
+.post-row.top .pr-pct { color: #4a9eff; }
+
+/* ── Behavioral Signals ── */
+.signals-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem; margin-bottom: 1rem;
+}
+.signal-item {
+  background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 8px; padding: 0.6rem 0.8rem;
+}
+.signal-item .si-name {
+  font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em;
+  color: #555; margin-bottom: 4px; font-family: monospace;
+}
+.signal-item .si-value {
+  font-size: 0.85rem; font-family: monospace; margin-bottom: 6px;
+}
+.signal-item .si-conf-bar {
+  height: 3px; background: #1a1a1a; border-radius: 2px; overflow: hidden;
+}
+.signal-item .si-conf-fill {
+  height: 100%; border-radius: 2px; transition: width 0.4s;
+}
+.signal-item .si-conf-label {
+  font-size: 0.6rem; font-family: monospace; color: #444; margin-top: 3px;
+}
+
+/* ── Pattern Tags ── */
+.pattern-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+.ptag {
+  font-size: 0.7rem; padding: 4px 10px; border-radius: 6px; font-family: monospace;
+  background: #110d1f; color: #a78bfa; border: 1px solid rgba(167,139,250,0.2);
+}
+
+/* ── Contradictions ── */
+.contradictions { margin-bottom: 1rem; }
+.contradictions .c-count {
+  font-size: 0.8rem; font-family: monospace; color: #ef4444; margin-bottom: 4px;
+}
+.contradictions .c-list {
+  font-size: 0.75rem; color: #888; font-family: monospace;
+}
+
+/* ── Wing Info ── */
+.wing-info {
+  display: flex; gap: 1rem; align-items: center;
+}
+.wing-info .wi-label { font-size: 0.8rem; color: #555; }
+.wing-info .wi-value { font-size: 0.9rem; font-family: monospace; color: #4a9eff; font-weight: 600; }
+.wing-info .wi-conf { font-size: 0.75rem; font-family: monospace; }
+
+/* ── Buttons ── */
+.btn {
+  padding: 0.6rem 1.5rem; border: none; border-radius: 8px;
+  font-size: 0.85rem; cursor: pointer; transition: all 0.15s;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.btn-primary { background: #4a9eff; color: #fff; }
+.btn-primary:hover { background: #3a8eef; }
+.btn-primary:disabled { opacity: 0.4; cursor: default; }
+.btn-loading {
+  position: relative; color: transparent !important;
+}
+.btn-loading::after {
+  content: ''; position: absolute; left: 50%; top: 50%;
+  width: 16px; height: 16px; margin: -8px 0 0 -8px;
+  border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+  border-radius: 50%; animation: spin 0.6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Select ── */
+.select-styled {
+  background: #0a0a0a; border: 1px solid #222; color: #e0e0e0;
+  padding: 0.5rem 0.8rem; border-radius: 8px; font-size: 0.85rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  cursor: pointer; min-width: 200px;
+}
+.select-styled:focus { outline: none; border-color: #4a9eff; }
+
+/* ── Report Container ── */
+.report-container {
+  background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 10px;
+  padding: 1.5rem; margin-top: 1rem; font-size: 0.9rem; line-height: 1.7; color: #ccc;
+}
+.report-container h1 { font-size: 1.3rem; color: #e0e0e0; font-weight: 500; margin: 1rem 0 0.5rem; }
+.report-container h2 { font-size: 1.1rem; color: #e0e0e0; font-weight: 500; margin: 1rem 0 0.5rem; }
+.report-container h3 { font-size: 0.95rem; color: #ccc; font-weight: 500; margin: 0.8rem 0 0.4rem; }
+.report-container strong { color: #e0e0e0; }
+.report-container em { color: #aaa; font-style: italic; }
+.report-container ul, .report-container ol { padding-left: 1.5rem; margin: 0.5rem 0; }
+.report-container li { margin-bottom: 0.3rem; }
+.report-container p { margin-bottom: 0.6rem; }
+.report-container hr { border: none; border-top: 1px solid #222; margin: 1rem 0; }
+
+/* ── Chat ── */
+.chat-container {
+  display: flex; flex-direction: column; height: 400px;
+  background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 10px;
+  overflow: hidden; margin-top: 1rem;
+}
+.chat-messages {
+  flex: 1; overflow-y: auto; padding: 1rem;
+}
+.chat-messages::-webkit-scrollbar { width: 4px; }
+.chat-messages::-webkit-scrollbar-track { background: transparent; }
+.chat-messages::-webkit-scrollbar-thumb { background: #222; border-radius: 2px; }
+
+.chat-msg {
+  max-width: 80%; margin-bottom: 0.75rem; padding: 0.7rem 1rem;
+  border-radius: 10px; font-size: 0.85rem; line-height: 1.5;
+}
+.chat-msg.assistant {
+  background: #111; border: 1px solid #1a1a1a; color: #ccc;
+  align-self: flex-start; margin-right: auto;
+}
+.chat-msg.user {
+  background: #1a2a3a; border: 1px solid #1a3050; color: #e0e0e0;
+  margin-left: auto; text-align: right;
+}
+.chat-msg.typing {
+  background: #111; border: 1px solid #1a1a1a; color: #555;
+}
+.chat-msg.typing::after {
+  content: ''; animation: dots 1.5s infinite;
+}
+@keyframes dots {
+  0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; }
+}
+
+.chat-input-row {
+  display: flex; gap: 0.5rem; padding: 0.75rem; border-top: 1px solid #1a1a1a;
+}
+.chat-input {
+  flex: 1; background: #0a0a0a; border: 1px solid #222; color: #e0e0e0;
+  padding: 0.6rem 0.8rem; border-radius: 8px; font-size: 0.85rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.chat-input:focus { outline: none; border-color: #4a9eff; }
+.chat-input::placeholder { color: #444; }
+.chat-send {
+  background: #4a9eff; border: none; color: #fff; padding: 0.6rem 1rem;
+  border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: background 0.15s;
+}
+.chat-send:hover { background: #3a8eef; }
+.chat-send:disabled { opacity: 0.4; cursor: default; }
+
+/* ── Misc ── */
+.loading-text { color: #444; font-size: 0.85rem; padding: 1rem 0; }
+.loading-text::after { content: ''; animation: dots 1.5s infinite; }
+.error-text { color: #ef4444; font-size: 0.85rem; padding: 0.5rem 0; }
+.section-row { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.fade-in { animation: fadeIn 0.3s ease; }
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="sidebar-title">Living Motions</div>
+  <div class="sidebar-sessions" id="sidebar-sessions">
+    <div class="loading-text" style="padding:1rem;text-align:center;">Loading sessions</div>
+  </div>
+  <div class="sidebar-footer">
+    <a href="/">Take Quiz</a>
+  </div>
+</nav>
+
+<div class="main" id="main">
+  <div class="main-empty">Select a session from the sidebar</div>
+</div>
+
+<script>
+const TYPE_NAMES = {
+  1: 'Reformer', 2: 'Helper', 3: 'Achiever', 4: 'Individualist',
+  5: 'Investigator', 6: 'Loyalist', 7: 'Enthusiast', 8: 'Challenger', 9: 'Peacemaker'
+};
+
+let allSessions = [];
+let activeSessionId = null;
+let activeSession = null;
+let activeFinalScores = null;
+let secondSessionId = null;
+let chatMessages = [];
+let chatBusy = false;
+
+// ── API Helper ──
+async function api(method, url, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  return res.json();
+}
+
+// ── Simple Markdown Renderer ──
+function renderMarkdown(text) {
+  if (!text) return '';
+  let html = text
+    // Escape HTML
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    // Headers
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    // Bold and italic
+    .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    // Horizontal rule
+    .replace(/^---$/gm, '<hr>')
+    // Unordered lists
+    .replace(/^[-*] (.+)$/gm, '<li>$1</li>')
+    // Ordered lists
+    .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
+    // Wrap consecutive <li> in <ul>
+    .replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>')
+    // Paragraphs (double newlines)
+    .replace(/\n\n/g, '</p><p>')
+    // Single newlines within paragraphs
+    .replace(/\n/g, '<br>');
+  return '<p>' + html + '</p>';
+}
+
+// ── Confidence color ──
+function confColor(v) {
+  if (v > 70) return '#10b981';
+  if (v >= 50) return '#f59e0b';
+  return '#ef4444';
+}
+function confClass(v) {
+  if (v > 70) return 'high';
+  if (v >= 50) return 'mid';
+  return 'low';
+}
+
+// ── Format date ──
+function fmtDate(d) {
+  if (!d) return '';
+  const dt = new Date(d);
+  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+// ── Load Sessions ──
+async function loadSessions() {
+  try {
+    const data = await api('GET', '/api/sessions');
+    allSessions = (data.sessions || []).filter(s => s.guessed_type != null);
+    renderSidebar();
+  } catch (e) {
+    document.getElementById('sidebar-sessions').innerHTML =
+      '<div class="error-text" style="padding:1rem;">Failed to load sessions</div>';
+  }
+}
+
+function renderSidebar() {
+  const container = document.getElementById('sidebar-sessions');
+  if (allSessions.length === 0) {
+    container.innerHTML = '<div style="padding:1rem;color:#333;font-size:0.8rem;text-align:center;">No completed sessions</div>';
+    return;
+  }
+  container.innerHTML = allSessions.map(s => {
+    const typeStr = s.guessed_type + (s.guessed_wing ? 'w' + s.guessed_wing : '');
+    const isActive = s.id === activeSessionId;
+    return `<div class="session-card ${isActive ? 'active' : ''}" data-id="${s.id}">
+      <div class="sc-name">${esc(s.name || 'Anonymous')}</div>
+      <div class="sc-meta">
+        <span class="sc-type">${typeStr}</span>
+        <span>${fmtDate(s.completed_at || s.created_at)}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  container.querySelectorAll('.session-card').forEach(el => {
+    el.addEventListener('click', () => selectSession(el.dataset.id));
+  });
+}
+
+function esc(s) {
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+// ── Select Session ──
+async function selectSession(id) {
+  activeSessionId = id;
+  secondSessionId = null;
+  chatMessages = [];
+  renderSidebar();
+
+  const main = document.getElementById('main');
+  main.innerHTML = '<div class="main-empty"><div class="loading-text">Loading session</div></div>';
+
+  try {
+    const data = await api('GET', '/api/sessions/' + id);
+    activeSession = data.session;
+    activeFinalScores = data.session.final_scores || {};
+    renderMain();
+  } catch (e) {
+    main.innerHTML = '<div class="main-empty"><div class="error-text">Failed to load session</div></div>';
+  }
+}
+
+// ── Render Main Content ──
+function renderMain() {
+  const s = activeSession;
+  const fs = activeFinalScores;
+  const main = document.getElementById('main');
+
+  const typeName = TYPE_NAMES[s.guessed_type] || '';
+  const wingType = s.guessed_wing || fs.likely_wing;
+  const wingName = s.guessed_wing_name || '';
+  const typeLabel = s.guessed_type + (wingType ? 'w' + wingType : '');
+  const fullWingName = wingName || (wingType ? TYPE_NAMES[wingType] || '' : '');
+
+  // Build type display name
+  let profileTitle = esc(s.name || 'Anonymous');
+  profileTitle += ` &mdash; Type ${typeLabel}`;
+  if (fullWingName) profileTitle += ` The ${fullWingName}`;
+
+  main.innerHTML = `
+    <div class="fade-in">
+      ${renderProfileSection(profileTitle, fs)}
+      ${renderIndividualReport()}
+      ${renderRelationshipReport()}
+      ${renderMirrorChat()}
+    </div>
+  `;
+
+  attachReportHandlers();
+}
+
+// ── Section 1: Profile Stats ──
+function renderProfileSection(profileTitle, fs) {
+  const posterior = fs.posterior || {};
+  const sorted = Object.entries(posterior).sort((a, b) => b[1] - a[1]);
+  const maxProb = Math.max(...sorted.map(([, p]) => p), 1);
+  const topType = sorted.length > 0 ? sorted[0][0] : null;
+
+  const posteriorBars = [1,2,3,4,5,6,7,8,9].map(n => {
+    const prob = posterior[n] || 0;
+    const pct = Math.round(prob);
+    const width = (prob / maxProb) * 100;
+    const isTop = String(n) === String(topType);
+    const barColor = isTop ? '#4a9eff' : '#333';
+    return `<div class="post-row ${isTop ? 'top' : ''}">
+      <span class="pr-label">Type ${n}</span>
+      <div class="pr-bar-bg"><div class="pr-bar-fill" style="width:${width}%;background:${barColor}"></div></div>
+      <span class="pr-pct">${pct}%</span>
+    </div>`;
+  }).join('');
+
+  // Behavioral signals
+  const behavioral = fs.behavioral || {};
+  const dims = [
+    { key: 'anger_awareness', label: 'Anger Awareness' },
+    { key: 'pressure_stance', label: 'Pressure Stance' },
+    { key: 'good_day_anchor', label: 'Good Day Anchor' },
+    { key: 'hurt_response', label: 'Hurt Response' },
+    { key: 'no_demand_pattern', label: 'No Demand Pattern' }
+  ];
+  const signalCards = dims.map(d => {
+    const sig = behavioral[d.key] || {};
+    const val = sig.value && sig.value !== 'null' ? sig.value : 'unknown';
+    const conf = sig.confidence || 0;
+    const color = confColor(conf);
+    return `<div class="signal-item">
+      <div class="si-name">${d.label}</div>
+      <div class="si-value" style="color:${val !== 'unknown' ? '#e0e0e0' : '#333'}">${val}</div>
+      <div class="si-conf-bar"><div class="si-conf-fill" style="width:${conf}%;background:${color}"></div></div>
+      <div class="si-conf-label">${conf}% confidence</div>
+    </div>`;
+  }).join('');
+
+  // Patterns
+  const patterns = [];
+  if (fs.threat_pattern) patterns.push(`<span class="ptag">threat: ${fs.threat_pattern}</span>`);
+  if (fs.move_pattern) patterns.push(`<span class="ptag">move: ${fs.move_pattern}</span>`);
+  if (fs.repeated_cost_pattern) patterns.push(`<span class="ptag">cost: ${fs.repeated_cost_pattern}</span>`);
+
+  // Contradictions
+  const contradictions = fs.contradictions || [];
+  const contradictionCount = fs.contradiction_count || contradictions.length || 0;
+
+  // Wing
+  const likelyWing = fs.likely_wing;
+  const wingConf = fs.wing_confidence || 0;
+  const wingConfCol = confColor(wingConf);
+
+  return `<div class="card">
+    <div class="profile-header">${profileTitle}</div>
+
+    <h3>Posterior Distribution</h3>
+    <div class="posterior-bars">${posteriorBars}</div>
+
+    <h3>Behavioral Signals</h3>
+    <div class="signals-grid">${signalCards}</div>
+
+    ${patterns.length > 0 ? `<h3>Patterns</h3><div class="pattern-tags">${patterns.join('')}</div>` : ''}
+
+    <h3>Contradictions</h3>
+    <div class="contradictions">
+      <div class="c-count">${contradictionCount} contradiction${contradictionCount !== 1 ? 's' : ''}</div>
+      ${contradictions.length > 0 ? `<div class="c-list">${contradictions.map(c => esc(c)).join(', ')}</div>` : ''}
+    </div>
+
+    <h3>Wing</h3>
+    <div class="wing-info">
+      <span class="wi-value">${likelyWing ? 'w' + likelyWing : 'undetermined'}</span>
+      <span class="wi-conf" style="color:${wingConfCol}">${wingConf}% confidence</span>
+    </div>
+  </div>`;
+}
+
+// ── Section 2: Individual Report ──
+function renderIndividualReport() {
+  return `<div class="card" id="individual-report-card">
+    <h2>Individual Motion Report</h2>
+    <div class="section-row">
+      <button class="btn btn-primary" id="gen-individual-btn">Generate Report</button>
+    </div>
+    <div id="individual-report-output"></div>
+  </div>`;
+}
+
+// ── Section 3: Relationship Report ──
+function renderRelationshipReport() {
+  const otherSessions = allSessions.filter(s => s.id !== activeSessionId);
+  const options = otherSessions.map(s => {
+    const typeStr = s.guessed_type + (s.guessed_wing ? 'w' + s.guessed_wing : '');
+    return `<option value="${s.id}">${esc(s.name || 'Anonymous')} (${typeStr})</option>`;
+  }).join('');
+
+  return `<div class="card" id="relationship-report-card">
+    <h2>Relationship Motion Report</h2>
+    <div class="section-row">
+      <select class="select-styled" id="second-person-select">
+        <option value="">Select a second person...</option>
+        ${options}
+      </select>
+      <button class="btn btn-primary" id="gen-relationship-btn" disabled>Generate Relationship Report</button>
+    </div>
+    <div id="relationship-report-output"></div>
+  </div>`;
+}
+
+// ── Section 4: Mirror Chat ──
+function renderMirrorChat() {
+  return `<div class="card" id="mirror-chat-card" style="display:none;">
+    <h2>Mirror Chat</h2>
+    <div id="chat-subtitle" style="font-size:0.8rem;color:#555;margin-bottom:0.75rem;"></div>
+    <div class="chat-container">
+      <div class="chat-messages" id="chat-messages"></div>
+      <div class="chat-input-row">
+        <input type="text" class="chat-input" id="chat-input" placeholder="Ask about their dynamic...">
+        <button class="chat-send" id="chat-send">Send</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── Attach Event Handlers ──
+function attachReportHandlers() {
+  // Individual report
+  const genIndBtn = document.getElementById('gen-individual-btn');
+  genIndBtn.addEventListener('click', async () => {
+    genIndBtn.disabled = true;
+    genIndBtn.classList.add('btn-loading');
+    const output = document.getElementById('individual-report-output');
+    output.innerHTML = '<div class="loading-text">Generating report</div>';
+
+    try {
+      const data = await api('POST', '/api/report/individual', { session_id: activeSessionId });
+      output.innerHTML = `<div class="report-container">${renderMarkdown(data.report)}</div>`;
+    } catch (e) {
+      output.innerHTML = '<div class="error-text">Failed to generate report</div>';
+    }
+    genIndBtn.disabled = false;
+    genIndBtn.classList.remove('btn-loading');
+  });
+
+  // Second person select
+  const secondSelect = document.getElementById('second-person-select');
+  const genRelBtn = document.getElementById('gen-relationship-btn');
+  const chatCard = document.getElementById('mirror-chat-card');
+
+  secondSelect.addEventListener('change', () => {
+    secondSessionId = secondSelect.value || null;
+    genRelBtn.disabled = !secondSessionId;
+
+    if (secondSessionId) {
+      chatCard.style.display = 'block';
+      const secondSession = allSessions.find(s => s.id === secondSessionId);
+      const nameA = activeSession.name || 'Anonymous';
+      const nameB = secondSession ? (secondSession.name || 'Anonymous') : 'Person B';
+      document.getElementById('chat-subtitle').textContent =
+        `Ask questions about ${nameA} and ${nameB}'s dynamic`;
+      chatMessages = [];
+      renderChatMessages();
+    } else {
+      chatCard.style.display = 'none';
+    }
+  });
+
+  // Relationship report
+  genRelBtn.addEventListener('click', async () => {
+    if (!secondSessionId) return;
+    genRelBtn.disabled = true;
+    genRelBtn.classList.add('btn-loading');
+    const output = document.getElementById('relationship-report-output');
+    output.innerHTML = '<div class="loading-text">Generating relationship report</div>';
+
+    try {
+      const data = await api('POST', '/api/report/relationship', {
+        session_id_a: activeSessionId,
+        session_id_b: secondSessionId
+      });
+      output.innerHTML = `<div class="report-container">${renderMarkdown(data.report)}</div>`;
+    } catch (e) {
+      output.innerHTML = '<div class="error-text">Failed to generate report</div>';
+    }
+    genRelBtn.disabled = false;
+    genRelBtn.classList.remove('btn-loading');
+  });
+
+  // Chat
+  const chatInput = document.getElementById('chat-input');
+  const chatSend = document.getElementById('chat-send');
+
+  async function sendChat() {
+    const text = chatInput.value.trim();
+    if (!text || chatBusy || !secondSessionId) return;
+
+    chatMessages.push({ role: 'user', content: text });
+    chatInput.value = '';
+    chatBusy = true;
+    chatSend.disabled = true;
+    renderChatMessages(true);
+
+    try {
+      const data = await api('POST', '/api/chat', {
+        session_id_a: activeSessionId,
+        session_id_b: secondSessionId,
+        messages: chatMessages
+      });
+      chatMessages.push({ role: 'assistant', content: data.reply });
+    } catch (e) {
+      chatMessages.push({ role: 'assistant', content: 'Error: Failed to get response.' });
+    }
+
+    chatBusy = false;
+    chatSend.disabled = false;
+    renderChatMessages();
+    chatInput.focus();
+  }
+
+  chatSend.addEventListener('click', sendChat);
+  chatInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+  });
+}
+
+function renderChatMessages(showTyping) {
+  const container = document.getElementById('chat-messages');
+  if (!container) return;
+
+  let html = chatMessages.map(m => {
+    return `<div class="chat-msg ${m.role}">${esc(m.content)}</div>`;
+  }).join('');
+
+  if (showTyping) {
+    html += '<div class="chat-msg typing">Thinking</div>';
+  }
+
+  container.innerHTML = html;
+  container.scrollTop = container.scrollHeight;
+}
+
+// ── Init ──
+loadSessions();
+</script>
+</body>
+</html>
