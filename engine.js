@@ -609,6 +609,11 @@ function checkDoneGates(state) {
   if (state.question_number < 12)
     failures.push({ gate: 'min_questions', msg: `only ${state.question_number} questions, minimum 12` });
 
+  // Gate 9: same-triad pairs must be tested
+  const requiredTriadPairs = getRequiredTriadPairs(state);
+  if (requiredTriadPairs.length > 0)
+    failures.push({ gate: 'triad_pairs', msg: `untested same-triad pairs: ${requiredTriadPairs.map(p => p.pair).join(', ')}` });
+
   // Gate 8: cost pattern conflict
   if (state.repair_mode && state.repeated_cost_pattern) {
     const costType = COST_TO_TYPE[state.repeated_cost_pattern];
@@ -651,6 +656,16 @@ function getRoutingConstraints(state) {
     constraints.force_broad = true;
   }
 
+  // Triad pair forcing — after Q8, if same-triad types haven't been pair-tested, force them
+  if (state.question_number >= 8 && !constraints.force_broad) {
+    const requiredTriadPairs = getRequiredTriadPairs(state);
+    if (requiredTriadPairs.length > 0) {
+      // Pick the most urgent: highest posterior peer first
+      const sorted = requiredTriadPairs.sort((a, b) => state.posterior[b.peer] - state.posterior[a.peer]);
+      constraints.force_triad_pair = sorted[0];
+    }
+  }
+
   return constraints;
 }
 
@@ -672,6 +687,57 @@ function getPairKey(a, b) {
 function isLookalikePair(a, b) {
   const key = getPairKey(a, b);
   return !!PAIR_AXES[key];
+}
+
+// ─── Triad-Aware Routing ─────────────────────────────────────────────
+// Types in the same triad often share identical behavioral profiles.
+// The engine must force pair-test same-triad competitors.
+
+function getTriadFor(type) {
+  for (const [name, members] of Object.entries(TRIADS)) {
+    if (members.includes(type)) return { name, members };
+  }
+  return null;
+}
+
+function getTriadPeers(type) {
+  const triad = getTriadFor(type);
+  if (!triad) return [];
+  return triad.members.filter(t => t !== type);
+}
+
+// Returns pairs that MUST be tested before the engine can close.
+// Same-triad types with posterior > 2% that haven't been pair-tested.
+function getRequiredTriadPairs(state) {
+  const topType = state.top_type;
+  if (!topType) return [];
+
+  const peers = getTriadPeers(topType);
+  const required = [];
+
+  for (const peer of peers) {
+    // Skip if already eliminated
+    if (state.posterior[peer] < 2) continue;
+
+    const pairKey = getPairKey(topType, peer);
+    // Check if this pair has been tested at least twice
+    const pairQuestions = state.question_history.filter(q => {
+      if (!q.pair) return false;
+      const normalizedPair = getPairKey(...q.pair.split('v').map(Number));
+      return normalizedPair === pairKey;
+    }).length;
+
+    if (pairQuestions < 2) {
+      required.push({
+        pair: pairKey,
+        peer,
+        questions_asked: pairQuestions,
+        splitter: PAIR_AXES[pairKey]?.splitter || null
+      });
+    }
+  }
+
+  return required;
 }
 
 // ─── Pair Signal Override ────────────────────────────────────────────
@@ -880,6 +946,7 @@ function buildStateSummary(state) {
     pairs_tested: state.pairs_tested,
     domains_used_recently: state.domains_used.slice(-3),
     same_type_family_streak: state.same_type_family_streak,
+    required_triad_pairs: getRequiredTriadPairs(state),
     done_gates: checkDoneGates(state)
   };
 }
@@ -914,6 +981,9 @@ module.exports = {
   getPairKey,
   isLookalikePair,
   derivePairSignals,
+  getTriadFor,
+  getTriadPeers,
+  getRequiredTriadPairs,
   recordQuestion,
   recordAnswer,
   checkCandidate,

@@ -25,10 +25,11 @@ Type is inferred from: threat → move → repeated cost
 
 1. If repair_mode is true: target the cost-pattern conflict
 2. If untested_types >= 4 and question < 10: force a broad triad/stance cut
-3. If rephrase is due: pick the best rephrase target
-4. If a clear pair ambiguity exists (top_two_gap < 20): target that pair with its best splitter
-5. If wing needs work (wing_confidence < 60 and type_confidence > 50): target wing split
-6. Otherwise: target the highest remaining ambiguity
+3. **If required_triad_pairs is non-empty: you MUST target one of those pairs.** Same-triad types (gut [8,9,1], heart [2,3,4], head [5,6,7]) share behavioral profiles and CANNOT be distinguished without direct pair testing. This is mandatory — the engine will block completion until these pairs are tested.
+4. If rephrase is due: pick the best rephrase target
+5. If a clear pair ambiguity exists (top_two_gap < 20): target that pair with its best splitter
+6. If wing needs work (wing_confidence < 60 and type_confidence > 50): target wing split
+7. Otherwise: target the highest remaining ambiguity
 
 ## Tunnel prevention
 
