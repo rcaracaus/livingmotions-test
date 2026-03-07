@@ -8,108 +8,26 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #0a0a0a;
-    color: #e0e0e0;
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    background: #0a0a0a; color: #e0e0e0;
+    min-height: 100vh; display: flex; justify-content: center; align-items: center;
   }
-  #app {
-    max-width: 600px;
-    width: 100%;
-    padding: 2rem;
-  }
+  #app { max-width: 600px; width: 100%; padding: 2rem; }
   h1 {
-    font-size: 1.4rem;
-    font-weight: 300;
-    color: #888;
-    margin-bottom: 2rem;
-    text-align: center;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    font-size: 1.4rem; font-weight: 300; color: #888; margin-bottom: 2rem;
+    text-align: center; letter-spacing: 0.1em; text-transform: uppercase;
   }
-  .progress {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 2rem;
-    justify-content: center;
-  }
-  .progress .dot {
-    width: 8px; height: 8px; border-radius: 50%; background: #222; transition: background 0.3s;
-  }
+  .progress { display: flex; gap: 6px; margin-bottom: 2rem; justify-content: center; }
+  .progress .dot { width: 8px; height: 8px; border-radius: 50%; background: #222; transition: background 0.3s; }
   .progress .dot.done { background: #4a9eff; }
   .progress .dot.current { background: #4a9eff; animation: pulse 1.5s infinite; }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-  .question-num {
-    text-align: center; color: #555; font-size: 0.8rem; margin-bottom: 1.5rem; letter-spacing: 0.05em;
+  .question-num { text-align: center; color: #555; font-size: 0.8rem; margin-bottom: 0.5rem; letter-spacing: 0.05em; }
+  .phase-tag {
+    text-align: center; margin-bottom: 1rem;
   }
-  .scores-panel {
-    margin-bottom: 1.5rem; background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 10px;
-    padding: 1rem; font-size: 0.75rem;
-  }
-  .scores-panel .sp-section {
-    margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid #151515;
-  }
-  .scores-panel .sp-section:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
-  .scores-panel .sp-heading {
-    font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; color: #444; margin-bottom: 0.5rem;
-  }
-  /* Type distribution */
-  .scores-panel .type-grid {
-    display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px;
-  }
-  .scores-panel .type-cell {
-    text-align: center; padding: 6px 2px; border-radius: 6px; transition: all 0.4s ease;
-    border: 1px solid transparent;
-  }
-  .scores-panel .type-cell .tc-num {
-    font-family: monospace; font-size: 0.85rem; font-weight: 600; line-height: 1;
-  }
-  .scores-panel .type-cell .tc-pct {
-    font-family: monospace; font-size: 0.55rem; margin-top: 2px; opacity: 0.7;
-  }
-  .scores-panel .type-cell .tc-bar {
-    height: 3px; border-radius: 2px; margin: 4px auto 0; transition: width 0.5s ease;
-    max-width: 80%;
-  }
-  /* Confidence badges */
-  .scores-panel .conf-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-  .scores-panel .conf-badge {
-    display: flex; align-items: center; gap: 6px; padding: 4px 10px;
-    background: #111; border: 1px solid #1a1a1a; border-radius: 6px; font-size: 0.7rem;
-  }
-  .scores-panel .conf-badge .conf-label { color: #555; }
-  .scores-panel .conf-badge .conf-val { font-family: monospace; font-weight: 600; }
-  .scores-panel .conf-badge .conf-val.high { color: #10b981; }
-  .scores-panel .conf-badge .conf-val.mid { color: #f59e0b; }
-  .scores-panel .conf-badge .conf-val.low { color: #ef4444; }
-  /* Behavioral signals */
-  .scores-panel .sig-row {
-    display: flex; align-items: center; margin-bottom: 3px; gap: 6px;
-  }
-  .scores-panel .sig-name {
-    width: 100px; font-family: monospace; font-size: 0.6rem; color: #444; flex-shrink: 0;
-  }
-  .scores-panel .sig-pill {
+  .phase-tag span {
     font-size: 0.6rem; padding: 2px 8px; border-radius: 4px; font-family: monospace;
-  }
-  .scores-panel .sig-pill.set { background: #0d1520; color: #4a9eff; border: 1px solid #1a3050; }
-  .scores-panel .sig-pill.unset { background: #111; color: #333; border: 1px solid #1a1a1a; }
-  .scores-panel .sig-conf {
-    font-family: monospace; font-size: 0.6rem; color: #333; margin-left: auto;
-  }
-  /* Status tags */
-  .scores-panel .status-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-  .scores-panel .status-tag {
-    font-size: 0.6rem; padding: 3px 8px; border-radius: 4px; font-family: monospace;
-  }
-  .scores-panel .status-tag.ok { background: #0a1f0a; color: #10b981; border: 1px solid #10b98133; }
-  .scores-panel .status-tag.warn { background: #1f1a0a; color: #f59e0b; border: 1px solid #f59e0b33; }
-  .scores-panel .status-tag.bad { background: #1f0a0a; color: #ef4444; border: 1px solid #ef444433; }
-  /* Reasoning */
-  .scores-panel .reasoning {
-    font-size: 0.7rem; color: #555; line-height: 1.4; font-style: italic;
+    background: #0d1520; color: #4a9eff; border: 1px solid #1a3050;
   }
   .choices { display: flex; flex-direction: column; gap: 1rem; }
   .choice {
@@ -122,45 +40,117 @@
   .loading { text-align: center; color: #444; padding: 3rem; font-size: 0.9rem; }
   .loading::after { content: ''; animation: dots 1.5s infinite; }
   @keyframes dots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+
+  /* Report button */
+  .report-row { text-align: center; margin-top: 1rem; }
+  .report-btn {
+    background: none; border: none; color: #333; cursor: pointer; font-size: 0.75rem;
+    display: inline-flex; align-items: center; gap: 4px; transition: color 0.15s; padding: 4px 8px;
+  }
+  .report-btn:hover { color: #ef4444; }
+  .report-btn svg { width: 14px; height: 14px; }
+
+  /* Diagnostics panel */
+  .diag {
+    margin-top: 1.5rem; background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 10px;
+    padding: 1rem; font-size: 0.75rem;
+  }
+  .diag .d-section { margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid #151515; }
+  .diag .d-section:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+  .diag .d-heading {
+    font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; color: #444; margin-bottom: 0.5rem;
+  }
+  /* Type grid */
+  .type-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; }
+  .type-cell { text-align: center; padding: 6px 2px; border-radius: 6px; transition: all 0.4s; border: 1px solid transparent; }
+  .type-cell .tc-num { font-family: monospace; font-size: 0.85rem; font-weight: 600; line-height: 1; }
+  .type-cell .tc-pct { font-family: monospace; font-size: 0.55rem; margin-top: 2px; opacity: 0.7; }
+  .type-cell .tc-bar { height: 3px; border-radius: 2px; margin: 4px auto 0; transition: width 0.5s; max-width: 80%; }
+  /* Badges */
+  .badge-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .badge {
+    display: flex; align-items: center; gap: 6px; padding: 4px 10px;
+    background: #111; border: 1px solid #1a1a1a; border-radius: 6px; font-size: 0.7rem;
+  }
+  .badge .b-label { color: #555; }
+  .badge .b-val { font-family: monospace; font-weight: 600; }
+  .badge .b-val.high { color: #10b981; }
+  .badge .b-val.mid { color: #f59e0b; }
+  .badge .b-val.low { color: #ef4444; }
+  /* Signals */
+  .sig-row { display: flex; align-items: center; margin-bottom: 3px; gap: 6px; }
+  .sig-name { width: 100px; font-family: monospace; font-size: 0.6rem; color: #444; flex-shrink: 0; }
+  .sig-pill { font-size: 0.6rem; padding: 2px 8px; border-radius: 4px; font-family: monospace; }
+  .sig-pill.set { background: #0d1520; color: #4a9eff; border: 1px solid #1a3050; }
+  .sig-pill.unset { background: #111; color: #333; border: 1px solid #1a1a1a; }
+  .sig-conf { font-family: monospace; font-size: 0.6rem; color: #333; margin-left: auto; }
+  /* Status tags */
+  .status-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .status-tag { font-size: 0.6rem; padding: 3px 8px; border-radius: 4px; font-family: monospace; }
+  .status-tag.ok { background: #0a1f0a; color: #10b981; border: 1px solid #10b98133; }
+  .status-tag.warn { background: #1f1a0a; color: #f59e0b; border: 1px solid #f59e0b33; }
+  .status-tag.bad { background: #1f0a0a; color: #ef4444; border: 1px solid #ef444433; }
+  /* Patterns */
+  .pattern-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .pattern-tag {
+    font-size: 0.6rem; padding: 3px 8px; border-radius: 4px; font-family: monospace;
+    background: #110d1f; color: #a78bfa; border: 1px solid #a78bfa33;
+  }
+  /* Reasoning */
+  .reasoning { font-size: 0.7rem; color: #555; line-height: 1.4; font-style: italic; }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center;
+    z-index: 100; animation: fadeIn 0.15s ease;
+  }
+  .modal {
+    background: #111; border: 1px solid #222; border-radius: 12px; padding: 1.5rem; width: 90%; max-width: 400px;
+  }
+  .modal h3 { font-size: 0.9rem; color: #ccc; margin-bottom: 1rem; font-weight: 400; }
+  .modal .star-row { text-align: left; margin-bottom: 1rem; }
+  .modal .star-row label { font-size: 0.75rem; color: #555; display: block; margin-bottom: 6px; }
+  .modal .star { font-size: 1.4rem; cursor: pointer; color: #333; transition: color 0.15s; padding: 0 2px; background: none; border: none; }
+  .modal .star:hover, .modal .star.on { color: #f59e0b; }
+  .modal textarea {
+    width: 100%; background: #0a0a0a; border: 1px solid #222; color: #ccc; padding: 8px 10px;
+    border-radius: 6px; font-size: 0.85rem; font-family: inherit; resize: vertical; min-height: 60px; margin-bottom: 1rem;
+  }
+  .modal textarea:focus { outline: none; border-color: #4a9eff; }
+  .modal textarea::placeholder { color: #444; }
+  .modal .modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
+  .modal .modal-actions button { padding: 6px 16px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; border: none; }
+  .modal .btn-cancel { background: #222; color: #888; }
+  .modal .btn-cancel:hover { background: #2a2a2a; }
+  .modal .btn-submit { background: #4a9eff; color: #fff; }
+  .modal .btn-submit:hover { background: #3a8eef; }
+
+  /* Result page */
   .result { text-align: center; animation: fadeIn 0.5s ease; }
   .result .type-num { font-size: 5rem; font-weight: 200; color: #4a9eff; line-height: 1; }
   .result .type-name { font-size: 1.3rem; color: #888; margin: 0.5rem 0 1.5rem; font-weight: 300; }
   .result .summary { font-size: 1rem; line-height: 1.7; color: #aaa; max-width: 480px; margin: 0 auto 2rem; }
-  .result .confidence-final { font-size: 0.8rem; color: #444; margin-bottom: 1.5rem; }
+  .result .conf-note { font-size: 0.8rem; color: #555; margin-bottom: 1.5rem; font-style: italic; }
   .result .distribution { margin-top: 1rem; text-align: left; }
   .result .distribution .row { display: flex; align-items: center; margin-bottom: 6px; font-size: 0.8rem; }
   .result .distribution .row .num { width: 30px; color: #555; font-family: monospace; }
-  .result .distribution .row .bar-bg {
-    flex: 1; height: 4px; background: #1a1a1a; border-radius: 2px; margin: 0 10px; overflow: hidden;
-  }
-  .result .distribution .row .bar-fill { height: 100%; background: #4a9eff; border-radius: 2px; transition: width 0.5s ease; }
+  .result .distribution .row .bar-bg { flex: 1; height: 4px; background: #1a1a1a; border-radius: 2px; margin: 0 10px; overflow: hidden; }
+  .result .distribution .row .bar-fill { height: 100%; background: #4a9eff; border-radius: 2px; transition: width 0.5s; }
   .result .distribution .row .pct { width: 35px; text-align: right; color: #444; font-family: monospace; }
   .result .distribution .row.top .num { color: #4a9eff; }
   .result .distribution .row.top .bar-fill { background: #4a9eff; }
   .result .distribution .row.top .pct { color: #4a9eff; }
-  .result .behavioral-grid {
-    margin-top: 2rem; text-align: left; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
-  }
-  .result .behavioral-grid .sig {
-    font-size: 0.75rem; padding: 8px 10px; background: #111; border-radius: 6px; border: 1px solid #1a1a1a;
-  }
-  .result .behavioral-grid .sig .sig-label { color: #555; font-family: monospace; font-size: 0.65rem; }
-  .result .behavioral-grid .sig .sig-value { color: #aaa; margin-top: 2px; }
 
   /* Calibration form */
-  .calibration {
-    margin-top: 2rem; padding: 1.5rem; background: #111; border: 1px solid #222; border-radius: 12px; text-align: left;
-  }
+  .calibration { margin-top: 2rem; padding: 1.5rem; background: #111; border: 1px solid #222; border-radius: 12px; text-align: left; }
   .calibration h3 { font-size: 0.85rem; color: #888; margin-bottom: 1rem; font-weight: 400; }
   .calibration .form-row { display: flex; gap: 1rem; margin-bottom: 1rem; align-items: center; }
   .calibration label { font-size: 0.75rem; color: #555; width: 80px; flex-shrink: 0; }
   .calibration select, .calibration input, .calibration textarea {
-    background: #0a0a0a; border: 1px solid #222; color: #ccc; padding: 6px 10px;
-    border-radius: 6px; font-size: 0.85rem; flex: 1;
+    background: #0a0a0a; border: 1px solid #222; color: #ccc; padding: 6px 10px; border-radius: 6px; font-size: 0.85rem; flex: 1;
   }
-  .calibration select:focus, .calibration input:focus, .calibration textarea:focus {
-    outline: none; border-color: #4a9eff;
-  }
+  .calibration select:focus, .calibration input:focus, .calibration textarea:focus { outline: none; border-color: #4a9eff; }
   .calibration textarea { resize: vertical; min-height: 50px; font-family: inherit; }
   .calibration .submit-btn {
     padding: 0.6rem 1.5rem; background: #4a9eff; border: none; color: #fff;
@@ -178,18 +168,11 @@
   }
   #restart:hover { border-color: #4a9eff; color: #4a9eff; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-  .debug {
-    margin-top: 2rem; padding: 1rem; background: #0a0a0a; border: 1px solid #1a1a1a;
-    border-radius: 8px; font-family: monospace; font-size: 0.7rem; color: #333;
-    max-height: 200px; overflow-y: auto; display: none;
-  }
-  .debug.show { display: block; }
-  /* Name entry */
+
   .name-form { text-align: center; animation: fadeIn 0.5s ease; }
   .name-form input {
     background: #111; border: 1px solid #222; color: #e0e0e0; padding: 0.8rem 1.2rem;
-    border-radius: 8px; font-size: 1rem; width: 100%; max-width: 320px; text-align: center;
-    margin-bottom: 1rem;
+    border-radius: 8px; font-size: 1rem; width: 100%; max-width: 320px; text-align: center; margin-bottom: 1rem;
   }
   .name-form input:focus { outline: none; border-color: #4a9eff; }
   .name-form input::placeholder { color: #444; }
@@ -200,78 +183,27 @@
   .name-form .start-btn:hover { background: #3a8eef; }
   .name-form .start-btn:disabled { opacity: 0.4; cursor: default; }
 
-  .informs-tag {
-    display: inline-block; font-size: 0.6rem; color: #4a9eff; background: #0d1520;
-    padding: 2px 6px; border-radius: 3px; margin: 2px 2px 0 0; font-family: monospace;
+  .debug {
+    margin-top: 2rem; padding: 1rem; background: #0a0a0a; border: 1px solid #1a1a1a;
+    border-radius: 8px; font-family: monospace; font-size: 0.7rem; color: #333;
+    max-height: 200px; overflow-y: auto; display: none;
   }
-  .informs-row { text-align: center; margin-bottom: 1rem; }
-
-  /* Report button */
-  .report-row { text-align: center; margin-top: 1rem; }
-  .report-btn {
-    background: none; border: none; color: #333; cursor: pointer; font-size: 0.75rem;
-    display: inline-flex; align-items: center; gap: 4px; transition: color 0.15s; padding: 4px 8px;
-  }
-  .report-btn:hover { color: #ef4444; }
-  .report-btn svg { width: 14px; height: 14px; }
-
-  /* Modal */
-  .modal-overlay {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center;
-    z-index: 100; animation: fadeIn 0.15s ease;
-  }
-  .modal {
-    background: #111; border: 1px solid #222; border-radius: 12px; padding: 1.5rem;
-    width: 90%; max-width: 400px;
-  }
-  .modal h3 { font-size: 0.9rem; color: #ccc; margin-bottom: 1rem; font-weight: 400; }
-  .modal .star-row { text-align: left; margin-bottom: 1rem; }
-  .modal .star-row label { font-size: 0.75rem; color: #555; display: block; margin-bottom: 6px; }
-  .modal .star {
-    font-size: 1.4rem; cursor: pointer; color: #333; transition: color 0.15s; padding: 0 2px;
-    background: none; border: none;
-  }
-  .modal .star:hover, .modal .star.on { color: #f59e0b; }
-  .modal textarea {
-    width: 100%; background: #0a0a0a; border: 1px solid #222; color: #ccc; padding: 8px 10px;
-    border-radius: 6px; font-size: 0.85rem; font-family: inherit; resize: vertical; min-height: 60px;
-    margin-bottom: 1rem;
-  }
-  .modal textarea:focus { outline: none; border-color: #4a9eff; }
-  .modal textarea::placeholder { color: #444; }
-  .modal .modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
-  .modal .modal-actions button {
-    padding: 6px 16px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; border: none;
-  }
-  .modal .btn-cancel { background: #222; color: #888; }
-  .modal .btn-cancel:hover { background: #2a2a2a; }
-  .modal .btn-submit { background: #4a9eff; color: #fff; }
-  .modal .btn-submit:hover { background: #3a8eef; }
+  .debug.show { display: block; }
 </style>
 </head>
 <body>
 <div id="app">
   <h1>Enneagram</h1>
-  <div id="content">
-    <div class="loading">Preparing first question</div>
-  </div>
+  <div id="content"><div class="loading">Preparing</div></div>
   <div id="debug" class="debug"></div>
 </div>
 
 <script>
 let state = {
-  sessionId: null,
-  questionIndex: 0,
-  answers: [],
-  messages: [],
-  scores: null,
-  lastInforms: null,
-  lastReasoning: null,
-  questionShownAt: null,
-  done: false,
-  staticQuestions: [],
-  staticAnswers: []
+  sessionId: null, name: null, questionIndex: 0,
+  staticQuestions: [], staticAnswers: [],
+  serverState: null, lastMetadata: null,
+  questionShownAt: null, done: false
 };
 
 const $ = sel => document.querySelector(sel);
@@ -285,57 +217,6 @@ function log(msg) {
   d.scrollTop = d.scrollHeight;
 }
 
-function showReportModal(sessionId, qNum, optA, optB) {
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  const stars = [1,2,3,4,5].map(n => `<button class="star" data-star="${n}">&#9733;</button>`).join('');
-  overlay.innerHTML = `
-    <div class="modal">
-      <h3>Report question ${qNum}</h3>
-      <div class="star-row">
-        <label>How good was this question?</label>
-        ${stars}
-      </div>
-      <textarea id="report-complaint" placeholder="What felt off about this question?"></textarea>
-      <div class="modal-actions">
-        <button class="btn-cancel" id="report-cancel">Cancel</button>
-        <button class="btn-submit" id="report-submit">Submit</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-
-  let selectedRating = 0;
-  overlay.querySelectorAll('.star').forEach(el => {
-    el.addEventListener('click', () => {
-      selectedRating = parseInt(el.dataset.star);
-      overlay.querySelectorAll('.star').forEach((s, i) => {
-        s.classList.toggle('on', i < selectedRating);
-      });
-    });
-  });
-
-  overlay.querySelector('#report-cancel').addEventListener('click', () => overlay.remove());
-  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
-
-  overlay.querySelector('#report-submit').addEventListener('click', async () => {
-    const complaint = overlay.querySelector('#report-complaint').value;
-    if (!selectedRating && !complaint.trim()) { overlay.remove(); return; }
-    const btn = overlay.querySelector('#report-submit');
-    btn.disabled = true;
-    btn.textContent = 'Sending...';
-    await api('POST', '/api/questions/report', {
-      session_id: sessionId,
-      question_number: qNum,
-      rating: selectedRating || null,
-      complaint: complaint.trim(),
-      option_a: optA,
-      option_b: optB
-    });
-    overlay.remove();
-  });
-}
-
 async function api(method, url, body) {
   const opts = { method, headers: { 'Content-Type': 'application/json' } };
   if (body) opts.body = JSON.stringify(body);
@@ -343,8 +224,10 @@ async function api(method, url, body) {
   return res.json();
 }
 
+function confClass(v) { return v >= 60 ? 'high' : v >= 40 ? 'mid' : 'low'; }
+
 function renderProgress() {
-  const total = 20;
+  const total = 25;
   const current = state.questionIndex;
   let dots = '';
   for (let i = 0; i < total; i++) {
@@ -354,25 +237,22 @@ function renderProgress() {
   return `<div class="progress">${dots}</div>`;
 }
 
-function confClass(v) { return v >= 75 ? 'high' : v >= 50 ? 'mid' : 'low'; }
+function renderDiagnostics() {
+  const s = state.serverState;
+  if (!s) return '';
 
-function renderScores() {
-  if (!state.scores) return '';
-  const s = state.scores;
-  const b = s.behavioral || {};
-  const topTypes = s.top_types || [];
-  const maxProb = Math.max(...topTypes.map(t => t.probability), 1);
+  const post = s.posterior || {};
+  const maxProb = Math.max(...Object.values(post), 1);
+  const sorted = Object.entries(post).sort((a, b) => b[1] - a[1]);
+  const topType = sorted[0]?.[0];
+  const secondType = sorted[1]?.[0];
 
-  // Type distribution — build a map for all 9 types
-  const typeMap = {};
-  topTypes.forEach(t => { typeMap[t.type] = t.probability; });
   const typeCells = [1,2,3,4,5,6,7,8,9].map(n => {
-    const prob = typeMap[n] || 0;
+    const prob = post[n] || 0;
     const pct = Math.round(prob);
-    // Color intensity based on probability
     const alpha = Math.max(0.05, prob / 100);
-    const isTop = topTypes[0]?.type === n;
-    const isRunner = topTypes[1]?.type === n;
+    const isTop = String(n) === String(topType);
+    const isRunner = String(n) === String(secondType);
     let color, bg, border;
     if (isTop) {
       color = '#4a9eff'; bg = `rgba(74,158,255,${alpha * 0.4})`; border = 'rgba(74,158,255,0.4)';
@@ -392,22 +272,14 @@ function renderScores() {
     </div>`;
   }).join('');
 
-  // Confidence badges
-  const tc = s.type_confidence || 0;
-  const wc = s.wing_confidence || 0;
-  const wingLabel = s.likely_wing ? `w${s.likely_wing}` : '?';
-  const confBadges = `<div class="conf-row">
-    <div class="conf-badge"><span class="conf-label">Type</span><span class="conf-val ${confClass(tc)}">${tc}%</span></div>
-    <div class="conf-badge"><span class="conf-label">Wing ${wingLabel}</span><span class="conf-val ${confClass(wc)}">${wc}%</span></div>
-  </div>`;
-
   // Behavioral signals
+  const b = s.behavioral || {};
   const dims = [
     { key: 'anger_awareness', label: 'anger' },
     { key: 'pressure_stance', label: 'pressure' },
     { key: 'good_day_anchor', label: 'good day' },
     { key: 'hurt_response', label: 'hurt' },
-    { key: 'no_demand_pattern', label: 'no demand' },
+    { key: 'no_demand_pattern', label: 'no demand' }
   ];
   const sigRows = dims.map(d => {
     const sig = b[d.key] || {};
@@ -420,65 +292,81 @@ function renderScores() {
     </div>`;
   }).join('');
 
-  // Status: lookalike + contradiction
-  const lc = s.lookalike_check || {};
-  const cc = s.contradiction_check || {};
+  // Status tags
   const tags = [];
-  if (state.questionIndex >= 10 && lc.detected_pair && lc.detected_pair !== 'null') {
-    const cls = lc.resolved ? 'ok' : 'warn';
-    tags.push(`<span class="status-tag ${cls}">lookalike: ${lc.detected_pair} (${lc.questions_asked || 0}q${lc.resolved ? ' ✓' : ''})</span>`);
+  if (s.target_pair) {
+    const cls = s.pair_resolved ? 'ok' : 'warn';
+    tags.push(`<span class="status-tag ${cls}">pair: ${s.target_pair} (${s.target_pair_questions}q${s.pair_resolved ? ' done' : ''})</span>`);
   }
-  if (cc.contradictions && cc.contradictions.length > 0) {
-    tags.push(`<span class="status-tag bad">contradictions: ${cc.contradictions.join(', ')}</span>`);
-  } else if (cc.passed) {
+  if (s.contradiction_count >= 2) {
+    tags.push(`<span class="status-tag bad">${s.contradiction_count} contradictions: ${(s.contradictions||[]).join(', ')}</span>`);
+  } else if (s.contradiction_count === 0 && s.question_number > 5) {
     tags.push(`<span class="status-tag ok">no contradictions</span>`);
   }
+  if (s.repair_mode) tags.push(`<span class="status-tag warn">repair mode</span>`);
+
+  // Patterns
+  const patterns = [];
+  if (s.threat_pattern) patterns.push(`<span class="pattern-tag">threat: ${s.threat_pattern}</span>`);
+  if (s.move_pattern) patterns.push(`<span class="pattern-tag">move: ${s.move_pattern}</span>`);
+  if (s.repeated_cost_pattern) patterns.push(`<span class="pattern-tag">cost: ${s.repeated_cost_pattern}</span>`);
+
+  // Badges
+  const wc = s.wing_confidence || 0;
+  const wingLabel = s.likely_wing ? `w${s.likely_wing}` : '?';
 
   // Reasoning
-  const reasoning = state.lastReasoning
-    ? `<div class="sp-section"><div class="reasoning">${state.lastReasoning}</div></div>`
+  const reasoning = state.lastMetadata?.reasoning
+    ? `<div class="d-section"><div class="reasoning">${state.lastMetadata.reasoning}</div></div>`
     : '';
 
-  return `<div class="scores-panel">
-    <div class="sp-section">
-      <div class="sp-heading">Type distribution</div>
+  // Done gates
+  const gates = s.done_gates || [];
+  const gateSection = gates.length > 0
+    ? `<div class="d-section"><div class="d-heading">Gates (${gates.length} failing)</div><div class="status-row">${gates.map(g => `<span class="status-tag warn">${g.msg}</span>`).join('')}</div></div>`
+    : `<div class="d-section"><div class="d-heading">Gates</div><div class="status-row"><span class="status-tag ok">all passing</span></div></div>`;
+
+  return `<div class="diag">
+    <div class="d-section">
+      <div class="d-heading">Type distribution</div>
       <div class="type-grid">${typeCells}</div>
     </div>
-    <div class="sp-section">
-      <div class="sp-heading">Confidence</div>
-      ${confBadges}
+    <div class="d-section">
+      <div class="d-heading">Confidence</div>
+      <div class="badge-row">
+        <div class="badge"><span class="b-label">Wing ${wingLabel}</span><span class="b-val ${confClass(wc)}">${wc}%</span></div>
+        <div class="badge"><span class="b-label">Phase</span><span class="b-val" style="color:#4a9eff">${s.phase || '?'}</span></div>
+        <div class="badge"><span class="b-label">Budget</span><span class="b-val" style="color:#888">${s.budget_remaining || '?'}</span></div>
+      </div>
     </div>
-    <div class="sp-section">
-      <div class="sp-heading">Behavioral signals</div>
+    <div class="d-section">
+      <div class="d-heading">Behavioral signals</div>
       ${sigRows}
     </div>
-    <div class="sp-section">
-      <div class="sp-heading">Checks</div>
-      <div class="status-row">${tags.join('') || '<span class="status-tag warn">pending</span>'}</div>
+    <div class="d-section">
+      <div class="d-heading">Checks</div>
+      <div class="status-row">${tags.join('') || '<span class="status-tag" style="color:#333">pending</span>'}</div>
     </div>
+    ${patterns.length > 0 ? `<div class="d-section"><div class="d-heading">Patterns</div><div class="pattern-row">${patterns.join('')}</div></div>` : ''}
     ${reasoning}
+    ${gateSection}
   </div>`;
 }
+
+function renderLoading() {
+  content().innerHTML = `${renderProgress()}<div class="loading">Thinking</div>${renderDiagnostics()}`;
+}
+
+// ─── Static Questions ───────────────────────────────────────────────
 
 function renderStaticQuestion(sq) {
   state.questionShownAt = Date.now();
   const qNum = state.questionIndex + 1;
-
-  api('POST', '/api/questions', {
-    session_id: state.sessionId,
-    question_number: qNum,
-    option_a: sq.a,
-    option_b: sq.b,
-    informs: [sq.dimension],
-    reasoning: 'Static calibration question',
-    scores: {}
-  }).then(r => { if (r.error) log('Question save error: ' + r.error); });
-
   content().innerHTML = `
     ${renderProgress()}
     <div class="question-num">Question ${qNum}</div>
-    <div class="informs-row"><span class="informs-tag">${sq.dimension}</span></div>
-    ${sq.stem ? `<p style="color:#e0e0e0; text-align:center; margin-bottom:1.5rem; font-size:1.2rem; font-weight:300;">${sq.stem}</p>` : ''}
+    <div class="phase-tag"><span>calibration: ${sq.dimension}</span></div>
+    ${sq.stem ? `<p style="color:#e0e0e0;text-align:center;margin-bottom:1.5rem;font-size:1.2rem;font-weight:300;">${sq.stem}</p>` : ''}
     <div class="choices">
       <div class="choice" data-pick="a">${sq.a}</div>
       <div class="choice" data-pick="b">${sq.b}</div>
@@ -489,28 +377,71 @@ function renderStaticQuestion(sq) {
   });
 }
 
-function renderQuestion(q, informs) {
-  const informsTags = (informs || []).map(t => `<span class="informs-tag">${t}</span>`).join('');
-  state.questionShownAt = Date.now();
-  const qNum = state.questionIndex + 1;
+async function handleStaticAnswer(pick, sq) {
+  document.querySelectorAll('.choice').forEach(el => el.classList.add('disabled'));
+  const responseTimeMs = state.questionShownAt ? Date.now() - state.questionShownAt : 0;
+  const chosenText = pick === 'a' ? sq.a : sq.b;
+  const unchosenText = pick === 'a' ? sq.b : sq.a;
 
-  api('POST', '/api/questions', {
-    session_id: state.sessionId,
-    question_number: qNum,
-    option_a: q.a.text,
-    option_b: q.b.text,
-    informs: informs,
-    reasoning: state.lastReasoning,
-    scores: state.scores
-  }).then(r => { if (r.error) log('Question save error: ' + r.error); });
+  state.staticAnswers.push({
+    question_number: state.questionIndex + 1,
+    dimension: sq.dimension,
+    picked: pick,
+    chosen_text: chosenText,
+    unchosen_text: unchosenText,
+    option_a: sq.a,
+    option_b: sq.b,
+    response_time_ms: responseTimeMs,
+    signal: sq.signal
+  });
+  state.questionIndex++;
+
+  if (state.questionIndex < state.staticQuestions.length) {
+    renderStaticQuestion(state.staticQuestions[state.questionIndex]);
+    return;
+  }
+
+  // Calibration complete — send to server
+  renderLoading();
+  try {
+    const res = await api('POST', '/api/calibration', {
+      session_id: state.sessionId,
+      answers: state.staticAnswers
+    });
+
+    if (res.error) throw new Error(res.error);
+
+    state.serverState = res.state;
+    state.questionIndex = res.state.question_number;
+
+    if (res.done) {
+      renderResult(res.result, res.state);
+    } else {
+      state.lastMetadata = res.metadata;
+      renderAdaptiveQuestion(res.question, res.metadata);
+    }
+  } catch (err) {
+    log('Error: ' + err.message);
+    content().innerHTML = `<div class="loading" style="color:#ff4a4a">Error: ${err.message}. Refresh to retry.</div>`;
+  }
+}
+
+// ─── Adaptive Questions ─────────────────────────────────────────────
+
+function renderAdaptiveQuestion(question, metadata) {
+  state.questionShownAt = Date.now();
+  const qNum = state.questionIndex;
+  const purposeTag = metadata?.purpose || 'adaptive';
+  const pairTag = metadata?.pair ? ` ${metadata.pair}` : '';
+  const splitterTag = metadata?.splitter ? ` (${metadata.splitter})` : '';
 
   content().innerHTML = `
     ${renderProgress()}
     <div class="question-num">Question ${qNum}</div>
-    ${informsTags ? `<div class="informs-row">${informsTags}</div>` : ''}
+    <div class="phase-tag"><span>${purposeTag}${pairTag}${splitterTag}</span></div>
     <div class="choices">
-      <div class="choice" data-pick="a">${q.a.text}</div>
-      <div class="choice" data-pick="b">${q.b.text}</div>
+      <div class="choice" data-pick="a">${question.a}</div>
+      <div class="choice" data-pick="b">${question.b}</div>
     </div>
     <div class="report-row">
       <button class="report-btn" id="report-btn">
@@ -518,50 +449,67 @@ function renderQuestion(q, informs) {
         Report this question
       </button>
     </div>
-    ${renderScores()}
+    ${renderDiagnostics()}
   `;
   document.querySelectorAll('.choice').forEach(el => {
-    el.addEventListener('click', () => handleAnswer(el.dataset.pick, q));
+    el.addEventListener('click', () => handleAdaptiveAnswer(el.dataset.pick, question));
   });
-  $('#report-btn').addEventListener('click', () => {
-    showReportModal(state.sessionId, qNum, q.a.text, q.b.text);
+  $('#report-btn')?.addEventListener('click', () => {
+    showReportModal(state.sessionId, qNum, question.a, question.b);
   });
 }
 
-function renderLoading() {
-  content().innerHTML = `
-    ${renderProgress()}
-    <div class="loading">Thinking</div>
-    ${renderScores()}
-  `;
+async function handleAdaptiveAnswer(pick, question) {
+  document.querySelectorAll('.choice').forEach(el => el.classList.add('disabled'));
+  const responseTimeMs = state.questionShownAt ? Date.now() - state.questionShownAt : 0;
+  const chosenText = pick === 'a' ? question.a : question.b;
+  const unchosenText = pick === 'a' ? question.b : question.a;
+
+  renderLoading();
+
+  try {
+    const res = await api('POST', '/api/answer', {
+      session_id: state.sessionId,
+      picked: pick,
+      chosen_text: chosenText,
+      unchosen_text: unchosenText,
+      response_time_ms: responseTimeMs
+    });
+
+    if (res.error) throw new Error(res.error);
+
+    state.serverState = res.state;
+    state.questionIndex = res.state.question_number;
+
+    if (res.done) {
+      renderResult(res.result, res.state);
+    } else {
+      state.lastMetadata = res.metadata;
+      renderAdaptiveQuestion(res.question, res.metadata);
+    }
+  } catch (err) {
+    log('Error: ' + err.message);
+    content().innerHTML = `<div class="loading" style="color:#ff4a4a">Error: ${err.message}. Refresh to retry.</div>`;
+  }
 }
 
-function renderResult(result, scores) {
-  const topTypes = scores.top_types || [];
-  const maxProb = Math.max(...topTypes.map(t => t.probability));
-  const rows = topTypes.map(t => {
-    const isTop = t.type === result.type;
-    const width = (t.probability / maxProb) * 100;
+// ─── Result ─────────────────────────────────────────────────────────
+
+function renderResult(result, serverState) {
+  state.done = true;
+  const post = serverState.posterior || {};
+  const sorted = Object.entries(post).sort((a, b) => b[1] - a[1]);
+  const maxProb = Math.max(...sorted.map(([,p]) => p), 1);
+
+  const rows = sorted.map(([type, prob]) => {
+    const isTop = parseInt(type) === result.type;
+    const width = (prob / maxProb) * 100;
     return `<div class="row ${isTop ? 'top' : ''}">
-      <span class="num">${t.type}</span>
+      <span class="num">${type}</span>
       <div class="bar-bg"><div class="bar-fill" style="width:${width}%"></div></div>
-      <span class="pct">${Math.round(t.probability)}%</span>
+      <span class="pct">${Math.round(prob)}%</span>
     </div>`;
   }).join('');
-
-  const b = scores.behavioral || {};
-  const signals = [
-    { label: 'Anger awareness', value: b.anger_awareness?.value },
-    { label: 'Pressure stance', value: b.pressure_stance?.value },
-    { label: 'Good day anchor', value: b.good_day_anchor?.value },
-    { label: 'Hurt response', value: b.hurt_response?.value },
-    { label: 'No demand pattern', value: b.no_demand_pattern?.value },
-  ];
-  const sigGrid = signals.map(s => `
-    <div class="sig">
-      <div class="sig-label">${s.label}</div>
-      <div class="sig-value">${s.value || 'unknown'}</div>
-    </div>`).join('');
 
   const guessedType = result.type || 0;
   const guessedWing = result.wing || 0;
@@ -576,10 +524,9 @@ function renderResult(result, scores) {
     <div class="result">
       <div class="type-num">${result.type}</div>
       <div class="type-name">${result.wing_name || ''}</div>
-      <div class="summary">${result.summary}</div>
-      <div class="confidence-final">${scores.type_confidence}% type / ${scores.wing_confidence}% wing — ${state.questionIndex} questions</div>
+      <div class="summary">${result.summary || ''}</div>
+      ${result.confidence_note ? `<div class="conf-note">${result.confidence_note}</div>` : ''}
       <div class="distribution">${rows}</div>
-      <div class="behavioral-grid">${sigGrid}</div>
 
       <div class="calibration">
         <h3>What's the real type? (for calibration)</h3>
@@ -593,36 +540,29 @@ function renderResult(result, scores) {
         </div>
         <div class="form-row">
           <label>Notes</label>
-          <textarea id="cal-notes" placeholder="Optional — what went wrong, what was confusing, etc."></textarea>
+          <textarea id="cal-notes" placeholder="Optional notes"></textarea>
         </div>
         <button class="submit-btn" id="cal-submit">Save calibration</button>
         <div id="cal-result"></div>
       </div>
-
       <button id="restart">Start over</button>
     </div>
   `;
 
   $('#cal-submit').addEventListener('click', async () => {
     const btn = $('#cal-submit');
-    btn.disabled = true;
-    btn.textContent = 'Saving...';
+    btn.disabled = true; btn.textContent = 'Saving...';
     const actualType = parseInt($('#actual-type').value);
     const actualWing = parseInt($('#actual-wing').value);
     const notes = $('#cal-notes').value;
     const res = await api('POST', '/api/sessions/actual', {
-      session_id: state.sessionId,
-      actual_type: actualType,
-      actual_wing: actualWing,
-      notes
+      session_id: state.sessionId, actual_type: actualType, actual_wing: actualWing, notes
     });
     const el = $('#cal-result');
     if (res.correct_type && res.correct_wing) {
-      el.className = 'result-msg correct';
-      el.textContent = 'Correct on both type and wing!';
+      el.className = 'result-msg correct'; el.textContent = 'Correct on both type and wing!';
     } else if (res.correct_type) {
-      el.className = 'result-msg correct';
-      el.textContent = 'Type correct, wing wrong.';
+      el.className = 'result-msg correct'; el.textContent = 'Type correct, wing wrong.';
     } else {
       el.className = 'result-msg wrong';
       el.textContent = `Wrong — guessed ${result.type}w${result.wing}, actual ${actualType}w${actualWing}. Saved.`;
@@ -631,357 +571,56 @@ function renderResult(result, scores) {
   });
 
   $('#restart').addEventListener('click', () => {
-    state = { sessionId: null, name: null, questionIndex: 0, answers: [], messages: [], scores: null, lastInforms: null, lastReasoning: null, questionShownAt: null, done: false, staticQuestions: [], staticAnswers: [] };
-    injectedLookalike = false;
-    injectedWing = false;
+    state = { sessionId: null, name: null, questionIndex: 0, staticQuestions: [], staticAnswers: [], serverState: null, lastMetadata: null, questionShownAt: null, done: false };
     showNameForm();
   });
 }
 
-async function callLLM(messages) {
-  const res = await fetch('/api/chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages, session_id: state.sessionId })
-  });
-  const data = await res.json();
-  if (data.error) throw new Error(data.error);
-  let text = data.content[0].text;
-  log('LLM: ' + text.substring(0, 300));
-  // Strip markdown code fences if the model wraps its response
-  const fenceMatch = text.match(/```(?:json)?\s*\n([\s\S]*?)\n\s*```/i);
-  if (fenceMatch) text = fenceMatch[1];
-  text = text.trim();
-  // Fix common LLM JSON mistakes: trailing commas before } or ]
-  text = text.replace(/,\s*([}\]])/g, '$1');
-  try {
-    return JSON.parse(text);
-  } catch (e) {
-    console.error('JSON parse failed at:', e.message, '\nRaw text:', text);
-    throw e;
-  }
-}
+// ─── Report Modal ───────────────────────────────────────────────────
 
-async function handleStaticAnswer(pick, sq) {
-  document.querySelectorAll('.choice').forEach(el => el.classList.add('disabled'));
-
-  const responseTimeMs = state.questionShownAt ? Date.now() - state.questionShownAt : 0;
-  const chosenText = pick === 'a' ? sq.a : sq.b;
-  const unchosenText = pick === 'a' ? sq.b : sq.a;
-
-  state.staticAnswers.push({ dimension: sq.dimension, picked: pick, chosen: chosenText, unchosen: unchosenText, responseTimeMs });
-  state.questionIndex++;
-
-  api('POST', '/api/questions/answer', {
-    session_id: state.sessionId,
-    question_number: state.questionIndex,
-    picked: pick,
-    chosen_text: chosenText,
-    unchosen_text: unchosenText,
-    response_time_ms: responseTimeMs
-  }).then(r => { if (r.error) log('Answer save error: ' + r.error); });
-
-  // More static questions to show?
-  if (state.questionIndex < state.staticQuestions.length) {
-    renderStaticQuestion(state.staticQuestions[state.questionIndex]);
-    return;
-  }
-
-  // Static phase done — batch all answers to LLM
-  renderLoading();
-
-  const summary = state.staticAnswers.map(a => {
-    const sq = state.staticQuestions.find(q => q.dimension === a.dimension);
-    const chosenPole = a.chosen === sq.a ? "A" : "B";
-    return JSON.stringify({
-      dimension: a.dimension,
-      chosen_pole: chosenPole,
-      chosen_text: a.chosen,
-      unchosen_text: a.unchosen,
-      response_time_ms: a.responseTimeMs,
-      signal: sq.signal
-    }, null, 2);
-  }).join('\n\n');
-
-  state.messages = [{
-    role: 'user',
-    content: `The person's name is ${state.name}. Here are their answers to 5 calibration questions with structured weak-prior metadata:\n\n${summary}\n\nIMPORTANT: Calibration answers set behavioral signal readings ONLY. They must NOT be used to eliminate or significantly lower any type. Many types present atypically on these dimensions. Start with a roughly even distribution across all 9 types (no type below 8%) and let only adaptive questions move type probabilities. You have 15 adaptive questions remaining (20 max total). Ask broad questions that cut across triads and stances.`
-  }];
-
-  try {
-    const response = await callLLM(state.messages);
-    state.messages.push({ role: 'assistant', content: JSON.stringify(response) });
-    state.scores = response.scores || null;
-    state.lastInforms = response.informs || null;
-    state.lastReasoning = response.reasoning || null;
-    renderQuestion(response.question, response.informs);
-  } catch (err) {
-    log('Error: ' + err.message);
-    content().innerHTML = `<div class="loading" style="color:#ff4a4a">Error: ${err.message}. Refresh to retry.</div>`;
-  }
-}
-
-// Known lookalike pairs
-const LOOKALIKE_PAIRS = [
-  [5,9],[9,2],[6,9],[1,6],[9,7],[2,9],[4,6],[3,7],[3,8],[6,8],[1,8]
-];
-
-const LOOKALIKE_TABLE = `## Lookalike Pair Disambiguation
-
-Your top 2 types form a known lookalike pair. You MUST ask 2-3 targeted questions using the splitting dimensions below BEFORE proposing done.
-
-| Pair | Splitting Dimensions | What to probe |
-|------|---------------------|---------------|
-| 5 vs 9 | inner_activity, intellectual_identity | 5 withdraws INTO a rich mental world; 9 withdraws into blankness/comfort. 5 hoards knowledge; 9 diffuses attention |
-| 9 vs 2 | initiation_direction, helping_motivation | 2 moves toward people proactively; 9 waits to be drawn in. 2 needs to be needed; 9 helps to keep peace |
-| 6 vs 9 | anxiety_style, inner_narrative | 6 actively worries and scans for threats; 9 avoids thinking about the problem entirely |
-| 1 vs 6 | authority_source, self_criticism_flavor | 1 has an internal standard they enforce; 6 looks to external authority/frameworks for guidance |
-| 9 vs 7 | energy_direction, pain_response | 7 accelerates toward more stimulation; 9 settles into what's already there. 7 reframes pain; 9 numbs it |
-| 2 vs 9 | self_erasure_style, anger_awareness | 2 erases self FOR others (martyrdom); 9 erases self to MERGE with others (disappearing). 2 feels anger then suppresses; 9 barely registers it |
-| 4 vs 6 | identity_relationship, emotional_source | 4's emotions come from identity/uniqueness; 6's emotions come from security/loyalty concerns |
-| 3 vs 7 | image_vs_experience, failure_response | 3 curates how others see them; 7 doesn't care about image, just wants the next experience |
-| 3 vs 8 | vulnerability_under_pressure, motivation | 3 becomes more polished under pressure; 8 becomes more raw. 3 wants admiration; 8 wants control |
-| 6 vs 8 | counterphobic_test, vulnerability_visibility | Counterphobic 6 acts tough but has underlying doubt; 8 has genuine certainty. Ask about what happens AFTER the confrontation |
-| 1 vs 8 | anger_relationship, authority_source | 1 suppresses anger into righteous criticism and follows internal standards; 8 feels anger immediately and uses it as fuel. 1 obeys rules even when costly; 8 makes their own rules |`;
-
-const WING_TABLE = `## Wing Splitting Guide
-
-You now need to discriminate wings. Ask at least one question targeting the wing split.
-
-| Type | Lower wing | Higher wing | How to split |
-|------|-----------|-------------|-------------|
-| 1 | 1w9: reserved and principled. Anger is cold and controlled | 1w2: warmer and more people-focused. Anger comes with disappointment in others | Does frustration make them withdraw into standards or reach out to correct people? |
-| 2 | 2w1: principled helper. Gives with conditions and quiet resentment | 2w3: charming helper. Gives to be seen and appreciated | Is the helping driven by duty or by desire for connection and recognition? |
-| 3 | 3w2: warm and interpersonal. Success means being admired by people | 3w4: introspective and aesthetic. Success means being unique and excellent | Do they perform for the audience or for an inner standard of distinction? |
-| 4 | 4w3: expressive and ambitious. Wants to stand out through achievement | 4w5: private and cerebral. Wants depth and understanding over recognition | Does their intensity push outward into expression or inward into analysis? |
-| 5 | 5w4: imaginative and emotionally intense underneath. Drawn to meaning | 5w6: systematic and loyal. Drawn to frameworks and trusted groups | Does solitude feed creativity and feeling or does it feed structure and preparation? |
-| 6 | 6w5: withdrawn and cerebral. Manages anxiety through knowledge and analysis | 6w7: outgoing and scattered. Manages anxiety through activity and humor | Do they cope with doubt by researching or by staying busy and social? |
-| 7 | 7w6: social and anxious underneath. Fun masks worry | 7w8: assertive and intense. Fun is pursued with force | Is there nervous energy under the enthusiasm or aggressive energy? |
-| 8 | 8w7: expansive and stimulation-seeking. Wants more of everything | 8w9: grounded and steady. Power is quiet and immovable | Does their force push outward into new territory or settle into holding ground? |
-| 9 | 9w8: stubborn and grounded. Has a quiet force that emerges when pushed | 9w1: principled and orderly. Has quiet opinions about right and wrong | When pushed does passive resistance have an edge to it or a moral tone? |`;
-
-let injectedLookalike = false;
-let injectedWing = false;
-
-// Expected behavioral profiles per type
-const TYPE_PROFILES = {
-  1: { anger_awareness:'immediate', pressure_stance:'engage', good_day_anchor:'performance', hurt_response:'containment', no_demand_pattern:'inquiry' },
-  2: { anger_awareness:'delayed', pressure_stance:'engage', good_day_anchor:'relational', hurt_response:'contact_seeking', no_demand_pattern:'settling' },
-  3: { anger_awareness:'delayed', pressure_stance:'engage', good_day_anchor:'performance', hurt_response:'containment', no_demand_pattern:'inquiry' },
-  4: { anger_awareness:'delayed', pressure_stance:'ease_back', good_day_anchor:'performance', hurt_response:'contact_seeking', no_demand_pattern:'inquiry' },
-  5: { anger_awareness:'delayed', pressure_stance:'ease_back', good_day_anchor:'performance', hurt_response:'containment', no_demand_pattern:'inquiry' },
-  6: { anger_awareness:'immediate', pressure_stance:'engage', good_day_anchor:'relational', hurt_response:'contact_seeking', no_demand_pattern:'inquiry' },
-  7: { anger_awareness:'delayed', pressure_stance:'engage', good_day_anchor:'performance', hurt_response:'containment', no_demand_pattern:'inquiry' },
-  8: { anger_awareness:'immediate', pressure_stance:'engage', good_day_anchor:'performance', hurt_response:'containment', no_demand_pattern:'inquiry' },
-  9: { anger_awareness:'delayed', pressure_stance:'ease_back', good_day_anchor:'relational', hurt_response:'containment', no_demand_pattern:'settling' }
-};
-
-function checkGates(scores, questionCount) {
-  const failures = [];
-
-  // Gate 1: type confidence
-  if ((scores.type_confidence || 0) < 90)
-    failures.push(`type_confidence is ${scores.type_confidence}, needs >= 90`);
-
-  // Gate 2: wing confidence
-  if ((scores.wing_confidence || 0) < 75)
-    failures.push(`wing_confidence is ${scores.wing_confidence}, needs >= 75`);
-
-  // Gate 3: behavioral signal coverage
-  const b = scores.behavioral || {};
-  const dims = ['anger_awareness','pressure_stance','good_day_anchor','hurt_response','no_demand_pattern'];
-  const strongSignals = dims.filter(d => (b[d]?.confidence || 0) >= 60).length;
-  if (strongSignals < 4)
-    failures.push(`only ${strongSignals}/5 behavioral signals >= 60 confidence, needs >= 4`);
-
-  // Gate 4: behavioral contradiction check
-  const declaredType = scores.top_types?.[0]?.type;
-  if (declaredType && TYPE_PROFILES[declaredType]) {
-    const expected = TYPE_PROFILES[declaredType];
-    const contradictions = dims.filter(d => {
-      const val = b[d]?.value;
-      return val && val !== 'null' && expected[d] && val !== expected[d];
+function showReportModal(sessionId, qNum, optA, optB) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  const stars = [1,2,3,4,5].map(n => `<button class="star" data-star="${n}">&#9733;</button>`).join('');
+  overlay.innerHTML = `
+    <div class="modal">
+      <h3>Report question ${qNum}</h3>
+      <div class="star-row"><label>How good was this question?</label>${stars}</div>
+      <textarea id="report-complaint" placeholder="What felt off about this question?"></textarea>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="report-cancel">Cancel</button>
+        <button class="btn-submit" id="report-submit">Submit</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  let selectedRating = 0;
+  overlay.querySelectorAll('.star').forEach(el => {
+    el.addEventListener('click', () => {
+      selectedRating = parseInt(el.dataset.star);
+      overlay.querySelectorAll('.star').forEach((s, i) => s.classList.toggle('on', i < selectedRating));
     });
-    if (contradictions.length >= 2)
-      failures.push(`2+ behavioral contradictions for type ${declaredType}: ${contradictions.join(', ')}`);
-  }
-
-  // Gate 5: lookalike pair disambiguation
-  const top2 = (scores.top_types || []).slice(0, 2).map(t => t.type);
-  if (top2.length === 2) {
-    const isPair = LOOKALIKE_PAIRS.some(([a,b]) =>
-      (top2[0]===a && top2[1]===b) || (top2[0]===b && top2[1]===a)
-    );
-    if (isPair) {
-      const lc = scores.lookalike_check || {};
-      if (!lc.resolved || (lc.questions_asked || 0) < 2)
-        failures.push(`lookalike pair ${top2[0]} vs ${top2[1]} detected but not disambiguated (${lc.questions_asked || 0} questions asked, need >= 2)`);
-    }
-  }
-
-  // Gate 6: minimum questions
-  if (questionCount < 10)
-    failures.push(`only ${questionCount} questions asked, minimum is 10`);
-
-  return failures;
-}
-
-async function handleAnswer(pick, question) {
-  document.querySelectorAll('.choice').forEach(el => el.classList.add('disabled'));
-
-  const responseTimeMs = state.questionShownAt ? Date.now() - state.questionShownAt : 0;
-  const chosen = pick === 'a' ? question.a : question.b;
-  const unchosen = pick === 'a' ? question.b : question.a;
-
-  state.answers.push({ picked: pick, chosen: chosen.text, unchosen: unchosen.text, responseTimeMs });
-  state.questionIndex++;
-
-  api('POST', '/api/questions/answer', {
-    session_id: state.sessionId,
-    question_number: state.questionIndex,
-    picked: pick,
-    chosen_text: chosen.text,
-    unchosen_text: unchosen.text,
-    response_time_ms: responseTimeMs
-  }).then(r => { if (r.error) log('Answer save error: ' + r.error); });
-
-  renderLoading();
-
-  // Build gate status feedback
-  const remaining = 20 - state.questionIndex;
-  let gateStatus = '';
-  if (state.scores) {
-    const gf = checkGates(state.scores, state.questionIndex);
-
-    // Floor rule enforcement and untested type tracking
-    let floorWarning = '';
-    if (state.scores.top_types) {
-      const floorTypes = state.scores.top_types.filter(t => t.probability <= 3).map(t => t.type);
-      const missing = [1,2,3,4,5,6,7,8,9].filter(n => !state.scores.top_types.find(t => t.type === n));
-      const untested = [...new Set([...floorTypes, ...missing])].sort();
-
-      if (state.questionIndex < 10) {
-        const belowFloor = [1,2,3,4,5,6,7,8,9].filter(n => {
-          const t = state.scores.top_types.find(t => t.type === n);
-          return !t || t.probability < 3;
-        });
-        if (belowFloor.length > 0) {
-          floorWarning = `\n\nFLOOR RULE VIOLATION: Types ${belowFloor.join(', ')} are below 3% before question 10. You MUST keep all 9 types at minimum 3% until question 10.`;
-        }
-      }
-
-      if (untested.length > 0) {
-        floorWarning += `\n\nUntested types (at floor or missing): ${untested.join(', ')}. Prioritize a question that could move these.`;
-      }
-    }
-
-    if (gf.length > 0) {
-      gateStatus = `\n\nGate status (${gf.length} failing):\n${gf.map(f => '- ' + f).join('\n')}${floorWarning}\n\nQuestions remaining: ${remaining}. Budget wisely.`;
-    } else {
-      gateStatus = `\n\nAll gates passing. ${remaining} questions remaining. You may propose done.`;
-    }
-  } else {
-    gateStatus = `\n\n${remaining} questions remaining.`;
-  }
-
-  // Inject lookalike table when: Q10+ and top 2 form a known pair
-  let injections = '';
-  if (state.questionIndex >= 10 && state.scores?.top_types && !injectedLookalike) {
-    const top2 = state.scores.top_types.slice(0, 2).map(t => t.type);
-    const isPair = LOOKALIKE_PAIRS.some(([a,b]) =>
-      (top2[0]===a && top2[1]===b) || (top2[0]===b && top2[1]===a)
-    );
-    if (isPair) {
-      injections += '\n\n' + LOOKALIKE_TABLE;
-      injectedLookalike = true;
-    }
-  }
-
-  // Inject wing table when: type_confidence >= 75 and wing not yet injected
-  if (state.scores && (state.scores.type_confidence || 0) >= 75 && !injectedWing) {
-    injections += '\n\n' + WING_TABLE;
-    injectedWing = true;
-  }
-
-  state.messages.push({
-    role: 'user',
-    content: `Picked ${pick.toUpperCase()}: "${chosen.text}". Response time: ${(responseTimeMs/1000).toFixed(1)}s.${gateStatus}${injections}`
   });
-
-  try {
-    let response = await callLLM(state.messages);
-    state.messages.push({ role: 'assistant', content: JSON.stringify(response) });
-    state.scores = response.scores || null;
-    state.lastInforms = response.informs || null;
-    state.lastReasoning = response.reasoning || null;
-
-    // Gate checker: LLM proposes done, we validate
-    if (response.status === 'proposing_done' || response.status === 'done') {
-      const gateFailures = checkGates(response.scores || {}, state.questionIndex);
-
-      if (gateFailures.length === 0 || state.questionIndex >= 20) {
-        // Gates pass (or max questions hit) — approve
-        state.done = true;
-        log('GATES PASSED: all conditions met');
-
-        const result = response.result || {
-          type: response.scores?.top_types?.[0]?.type || 0,
-          wing: response.scores?.likely_wing || 0,
-          wing_name: response.scores?.top_types?.[0]
-            ? `${response.scores.top_types[0].type}w${response.scores.likely_wing || '?'}`
-            : 'Unknown',
-          summary: 'Max questions reached. Result based on accumulated scores.'
-        };
-
-        api('POST', '/api/sessions/complete', {
-          session_id: state.sessionId,
-          question_count: state.questionIndex,
-          guessed_type: result.type,
-          guessed_wing: result.wing,
-          guessed_wing_name: result.wing_name,
-          guessed_summary: result.summary,
-          final_scores: response.scores
-        });
-
-        renderResult(result, response.scores);
-      } else {
-        // Gates fail — reject and tell LLM to keep going
-        const rejection = `GATE CHECK FAILED. Your proposal to finalize was rejected. Failed gates:\n${gateFailures.map(f => '- ' + f).join('\n')}\n\nAddress these gaps. Ask the next question.`;
-        log('GATES REJECTED: ' + gateFailures.join('; '));
-
-        state.messages.push({ role: 'user', content: rejection });
-
-        const retry = await callLLM(state.messages);
-        state.messages.push({ role: 'assistant', content: JSON.stringify(retry) });
-        state.scores = retry.scores || null;
-        state.lastInforms = retry.informs || null;
-        state.lastReasoning = retry.reasoning || null;
-
-        if (retry.question) {
-          renderQuestion(retry.question, retry.informs);
-        } else {
-          // LLM didn't provide a question after rejection — force continue
-          log('LLM did not provide question after rejection');
-          state.messages.push({ role: 'user', content: 'You must ask a question. Provide a forced-choice question targeting the failed gates.' });
-          const force = await callLLM(state.messages);
-          state.messages.push({ role: 'assistant', content: JSON.stringify(force) });
-          state.scores = force.scores || null;
-          renderQuestion(force.question, force.informs);
-        }
-      }
-    } else {
-      renderQuestion(response.question, response.informs);
-    }
-  } catch (err) {
-    log('Error: ' + err.message);
-    content().innerHTML = `<div class="loading" style="color:#ff4a4a">Error: ${err.message}. Refresh to retry.</div>`;
-  }
+  overlay.querySelector('#report-cancel').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  overlay.querySelector('#report-submit').addEventListener('click', async () => {
+    const complaint = overlay.querySelector('#report-complaint').value;
+    if (!selectedRating && !complaint.trim()) { overlay.remove(); return; }
+    await api('POST', '/api/questions/report', {
+      session_id: sessionId, question_number: qNum,
+      rating: selectedRating || null, complaint: complaint.trim(),
+      option_a: optA, option_b: optB
+    });
+    overlay.remove();
+  });
 }
+
+// ─── Name Form ──────────────────────────────────────────────────────
 
 function showNameForm() {
   content().innerHTML = `
     <div class="name-form">
-      <p style="color:#555; font-size:0.85rem; margin-bottom:1.5rem;">Enter your name to begin</p>
+      <p style="color:#555;font-size:0.85rem;margin-bottom:1.5rem;">Enter your name to begin</p>
       <input type="text" id="name-input" placeholder="Your name" autofocus>
       <button class="start-btn" id="begin-btn">Begin</button>
     </div>
@@ -989,27 +628,23 @@ function showNameForm() {
   const input = $('#name-input');
   const btn = $('#begin-btn');
   btn.addEventListener('click', () => startQuiz(input.value.trim()));
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter') startQuiz(input.value.trim());
-  });
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') startQuiz(input.value.trim()); });
 }
 
 async function startQuiz(name) {
   if (!name) { $('#name-input').focus(); return; }
   renderLoading();
 
-  const [{ id }, staticQuestions] = await Promise.all([
-    api('POST', '/api/sessions', { name }),
-    api('GET', '/api/static-questions')
-  ]);
-
-  state.sessionId = id;
+  const res = await api('POST', '/api/sessions', { name });
+  state.sessionId = res.id;
   state.name = name;
-  state.staticQuestions = staticQuestions;
+  state.staticQuestions = res.static_questions || [];
   state.staticAnswers = [];
-  log('Session: ' + id + ' (' + name + ')');
+  log('Session: ' + res.id + ' (' + name + ')');
 
-  renderStaticQuestion(state.staticQuestions[0]);
+  if (state.staticQuestions.length > 0) {
+    renderStaticQuestion(state.staticQuestions[0]);
+  }
 }
 
 showNameForm();

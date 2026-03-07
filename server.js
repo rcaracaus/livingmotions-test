@@ -3,8 +3,11 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const Database = require('better-sqlite3');
+const engine = require('./engine');
+const prompts = require('./prompts');
 
 const ANTHROPIC_API_KEY = 'REDACTED';
+const MODEL = 'claude-sonnet-4-20250514';
 
 // ─── Database setup ──────────────────────────────────────────────────
 
@@ -89,9 +92,6 @@ const updateQuestionAnswer = db.prepare(`
   UPDATE questions SET picked = ?, chosen_text = ?, unchosen_text = ?, response_time_ms = ?, answered_at = datetime('now')
   WHERE session_id = ? AND question_number = ?
 `);
-const updateQuestionRating = db.prepare(`
-  UPDATE questions SET rating = ? WHERE session_id = ? AND question_number = ?
-`);
 const insertReport = db.prepare(`
   INSERT INTO reports (session_id, question_number, rating, complaint, option_a, option_b) VALUES (?, ?, ?, ?, ?, ?)
 `);
@@ -106,176 +106,13 @@ const getAllSessions = db.prepare(`
   FROM sessions ORDER BY created_at DESC
 `);
 
-// ─── System prompt ──────────────────────────────────────────────────
-
-const SYSTEM_PROMPT = `You are an adaptive Enneagram typing engine. You ask forced-choice questions to determine a person's type, wing, and behavioral profile as efficiently as possible.
-
-## Scores to gather
-
-You are tracking ALL of the following simultaneously. Every question you ask should ideally inform 2+ scores at once.
-
-### PRIMARY (type + wing)
-- **Core type** (1-9): probability distribution across all 9 types. Confidence target: 90+
-- **Wing**: one of the two adjacent types on the circle (1-2-3-4-5-6-7-8-9-1). Confidence target: 70+
-
-### BEHAVIORAL SIGNALS (5 dimensions)
-These are independent of type — they describe HOW the person lives their pattern. These match the 5 calibration questions you receive.
-
-1. **anger_awareness**: immediate (feels it right away) vs delayed (realizes later)
-   - Immediate leans: 1, 6, 8
-   - Delayed leans: 2, 3, 4, 5, 7, 9
-
-2. **pressure_stance**: engage (moves into tension to steer it) vs ease_back (reduces involvement)
-   - Engage leans: 1, 2, 3, 6, 7, 8
-   - Ease back leans: 4, 5, 9
-
-3. **good_day_anchor**: relational (mattered to someone) vs performance (rose to the task)
-   - Relational leans: 2, 9
-   - Performance leans: 1, 3, 4, 5, 6, 7, 8
-
-4. **hurt_response**: contact_seeking (wants response from them) vs containment (wants time alone first)
-   - Contact seeking leans: 2, 4, 6
-   - Containment leans: 1, 3, 5, 7, 8, 9
-
-5. **no_demand_pattern**: inquiry (drifts toward understanding) vs settling (drifts toward comfort)
-   - Inquiry leans: 5, 6
-   - Settling leans: 9
-
-### DERIVED (computed from above but sharpen with questions if ambiguous)
-6. **Anger expression**: corrective (1) | explosive (8) | contained (9) | charge_then_doubt (6) | internalized (4) | deflected (2, 3, 5, 7)
-7. **Decision style**: decisive (acts fast) | consequences (weighs impact) | doubt (second-guesses)
-8. **Withdrawal reason** (only if withdrawer): energy | emotional | peace | strategic
-
-## Lookalike pairs and wing splitting
-
-These guides will be injected by the system at the right time. Do NOT attempt lookalike disambiguation or wing splitting before question 10. Focus on broad type discrimination first.
-
-## Behavioral Contradiction Check
-
-Before declaring "done", you MUST verify that your behavioral signal readings are consistent with your declared type. If 2+ signals contradict the type, you MUST reassess.
-
-Expected behavioral profiles per type:
-- **Type 1**: anger_awareness=immediate | pressure_stance=engage | good_day_anchor=performance | hurt_response=containment | no_demand_pattern=inquiry
-- **Type 2**: anger_awareness=delayed | pressure_stance=engage | good_day_anchor=relational | hurt_response=contact_seeking | no_demand_pattern=settling
-- **Type 3**: anger_awareness=delayed | pressure_stance=engage | good_day_anchor=performance | hurt_response=containment | no_demand_pattern=inquiry
-- **Type 4**: anger_awareness=delayed | pressure_stance=ease_back | good_day_anchor=performance | hurt_response=contact_seeking | no_demand_pattern=inquiry
-- **Type 5**: anger_awareness=delayed | pressure_stance=ease_back | good_day_anchor=performance | hurt_response=containment | no_demand_pattern=inquiry
-- **Type 6**: anger_awareness=immediate | pressure_stance=engage | good_day_anchor=relational | hurt_response=contact_seeking | no_demand_pattern=inquiry
-- **Type 7**: anger_awareness=delayed | pressure_stance=engage | good_day_anchor=performance | hurt_response=containment | no_demand_pattern=inquiry
-- **Type 8**: anger_awareness=immediate | pressure_stance=engage | good_day_anchor=performance | hurt_response=containment | no_demand_pattern=inquiry
-- **Type 9**: anger_awareness=delayed | pressure_stance=ease_back | good_day_anchor=relational | hurt_response=containment | no_demand_pattern=settling
-
-If your behavioral readings contradict the expected profile on 2+ dimensions, STOP and reconsider. The contradiction likely means you have the wrong type. Re-examine which type DOES match the observed behavioral pattern.
-
-## Strategy
-
-The first 5 questions are pre-collected calibration questions covering behavioral dimensions. You receive all 5 answers at once as your first message. Your adaptive questioning begins at question 6.
-
-**On your first response:** Analyze the 5 calibration answers as a batch. Set initial behavioral signal readings and type probabilities. Keep at least 3 types above 10% probability. Do not over-index on any single calibration answer. Then ask your first adaptive question.
-
-**On every subsequent response:** Ask the single question that best resolves the current highest ambiguity. Before question 10 prioritize broad discrimination — design questions that test multiple types at once rather than splitting a single pair. After question 10 if your top 2 types form a lookalike pair (see table above) you MUST target it.
-
-**Probability floor rule:** Before question 10 no type may drop below 3%. After question 10 types may drop to 0% only with clear evidence from multiple questions. When a type sits near the floor but its behavioral profile partially matches the person consider designing one question that would either confirm elimination or resurrect it. Pay special attention to floor types that share a triad with your leading candidate.
-
-## Proposing done
-
-You do NOT have the authority to end the test. You can only propose that you are done by setting status to "proposing_done". An external gate checker will validate your scores and either approve (ending the test) or reject with specific reasons. If rejected you MUST keep asking questions.
-
-When you believe you have enough signal set status to "proposing_done" and include your result. The gate checker will verify:
-
-1. type_confidence >= 90
-2. wing_confidence >= 75
-3. At least 4 of 5 behavioral signals have confidence >= 60
-4. No 2+ behavioral contradictions against declared type
-5. If a lookalike pair was detected at least 2 questions targeted it
-6. Minimum 10 questions total (including 5 calibration)
-7. Maximum 20 questions total
-
-Do not inflate confidence to meet thresholds. If the gate checker rejects your proposal it will tell you exactly which gates failed. Address those specific gaps with your next question.
-
-## Question design rules
-
-- Each question is a forced-choice: A vs B
-- Items must be behavioral/phenomenological — what the person DOES or NOTICES, not abstract identity
-- Both options should sound equally valid — no "healthy" answer
-- Keep items under 15 words per option
-- Never use commas or dashes in question text. Each option should be one clean sentence or phrase
-- Use present tense, first person
-- Never use Enneagram terminology (type numbers, wing, arrow, tritype, etc.)
-- Both options should carry a slight cost or confession — neither should sound aspirational
-- Never frame one option as caring about people and the other as not caring. Both should assume the person cares and test HOW or WHY they care
-- Avoid any question where one answer sounds generous or warm and the other sounds cold or selfish. If you can tell which option a "nice person" would pick the question is bad
-- MAXIMIZE INFORMATION: tag each question with which scores it informs. A great question informs type + 1-2 behavioral signals simultaneously.
-
-## Response format
-
-You MUST respond with valid JSON only. No markdown, no explanation, no text outside the JSON.
-
-When asking a question:
-{
-  "status": "asking",
-  "question_number": <number>,
-  "scores": {
-    "type_confidence": <number 0-100>,
-    "wing_confidence": <number 0-100>,
-    "top_types": [{"type": <number>, "probability": <number>}, {"type": <number>, "probability": <number>}, {"type": <number>, "probability": <number>}],
-    "likely_wing": <number or null>,
-    "behavioral": {
-      "anger_awareness": {"value": "<immediate|delayed|null>", "confidence": <number 0-100>},
-      "pressure_stance": {"value": "<engage|ease_back|null>", "confidence": <number 0-100>},
-      "good_day_anchor": {"value": "<relational|performance|null>", "confidence": <number 0-100>},
-      "hurt_response": {"value": "<contact_seeking|containment|null>", "confidence": <number 0-100>},
-      "no_demand_pattern": {"value": "<inquiry|settling|null>", "confidence": <number 0-100>}
-    },
-    "lookalike_check": {
-      "detected_pair": "<e.g. 5 vs 9 or null if no lookalike pair in top 2>",
-      "questions_asked": <number of questions targeting this pair>,
-      "resolved": <true|false>
-    },
-    "contradiction_check": {
-      "passed": <true|false>,
-      "contradictions": ["<list of signals that contradict declared type, empty if passed>"]
-    }
-  },
-  "reasoning": "<1-2 sentences: what you're targeting and why>",
-  "informs": ["<which scores this question helps: e.g. type, wing, anger_awareness, pressure_stance>"],
-  "question": {
-    "a": {"text": "<option A text>"},
-    "b": {"text": "<option B text>"}
-  }
-}
-
-When proposing done:
-{
-  "status": "proposing_done",
-  "scores": {
-    "type_confidence": <number>,
-    "wing_confidence": <number>,
-    "top_types": [... all 9 sorted by probability],
-    "likely_wing": <number>,
-    "behavioral": { ... same structure, all filled },
-    "lookalike_check": {
-      "detected_pair": "<the pair that was tested or null>",
-      "questions_asked": <number>,
-      "resolved": true
-    },
-    "contradiction_check": {
-      "passed": true,
-      "contradictions": []
-    }
-  },
-  "result": {
-    "type": <number>,
-    "wing": <number>,
-    "wing_name": "<e.g. 5w4 - The Iconoclast>",
-    "summary": "<2-3 sentences: personalized summary mentioning how their behavioral signals color their type>"
-  },
-  "reasoning": "<final reasoning including how gates were satisfied>"
-}`;
-
 // ─── Static questions ───────────────────────────────────────────────
 
 const STATIC_QUESTIONS = JSON.parse(fs.readFileSync(path.join(__dirname, 'static-questions.json'), 'utf8'));
+
+// ─── In-memory state store ──────────────────────────────────────────
+
+const sessions = new Map(); // sessionId -> state
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
@@ -293,6 +130,146 @@ function readBody(req) {
 function json(res, status, data) {
   res.writeHead(status, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify(data));
+}
+
+function parseJSON(text) {
+  // Strip markdown code fences
+  const fenceMatch = text.match(/```(?:json)?\s*\n([\s\S]*?)\n\s*```/i);
+  if (fenceMatch) text = fenceMatch[1];
+  text = text.trim();
+  // Fix trailing commas
+  text = text.replace(/,\s*([}\]])/g, '$1');
+  return JSON.parse(text);
+}
+
+async function callLLM(systemPrompt, userPrompt, sessionId) {
+  // Save to messages table
+  if (sessionId) {
+    insertMessage.run(sessionId, 'system', systemPrompt.substring(0, 500));
+    insertMessage.run(sessionId, 'user', userPrompt.substring(0, 500));
+  }
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: 1500,
+      system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
+      messages: [{ role: 'user', content: userPrompt }]
+    })
+  });
+
+  const data = await response.json();
+  if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+
+  const text = data.content?.[0]?.text;
+  if (!text) throw new Error('Empty LLM response');
+
+  if (sessionId) {
+    insertMessage.run(sessionId, 'assistant', text.substring(0, 1000));
+  }
+
+  return parseJSON(text);
+}
+
+// ─── Pipeline: Router → Writer → Checker ────────────────────────────
+
+async function generateNextQuestion(state, lastAnswer, calibrationData) {
+  const stateSummary = engine.buildStateSummary(state);
+
+  // Step 1: Router — decide what to test
+  const routerPrompt = prompts.buildRouterPrompt(stateSummary, lastAnswer, calibrationData);
+  const routerOutput = await callLLM(
+    'You are an Enneagram typing router. Output valid JSON only.',
+    routerPrompt,
+    state.session_id
+  );
+
+  // Apply router's score updates to state
+  engine.applyRouterUpdate(state, routerOutput);
+
+  // Step 2: Check if we should propose done
+  const constraints = engine.getRoutingConstraints(state);
+  const doneGates = engine.checkDoneGates(state);
+
+  if (doneGates.length === 0 && state.question_number >= 12) {
+    // All gates pass — generate final result
+    const updatedSummary = engine.buildStateSummary(state);
+    const approvalPrompt = prompts.buildApprovalPrompt(state, updatedSummary);
+    const result = await callLLM(
+      'You are finalizing an Enneagram typing. Output valid JSON only.',
+      approvalPrompt,
+      state.session_id
+    );
+    return { done: true, result, state };
+  }
+
+  // Hard max
+  if (state.budget_remaining <= 0) {
+    const updatedSummary = engine.buildStateSummary(state);
+    const approvalPrompt = prompts.buildApprovalPrompt(state, updatedSummary);
+    const result = await callLLM(
+      'You are finalizing an Enneagram typing. Output valid JSON only.',
+      approvalPrompt,
+      state.session_id
+    );
+    return { done: true, result, state };
+  }
+
+  // Step 3: Writer — generate candidates
+  let writerPrompt;
+  if (constraints.rephrase_required && state.rephrase_targets.length > 0) {
+    // Pick rephrase target
+    const target = state.rephrase_targets.shift();
+    writerPrompt = prompts.buildRephraseWriterPrompt(target, state);
+    state.next_rephrase_question = state.question_number + 7;
+  } else {
+    writerPrompt = prompts.buildWriterPrompt(routerOutput, state);
+  }
+
+  const writerOutput = await callLLM(
+    'You are a forced-choice item writer. Output valid JSON only.',
+    writerPrompt,
+    state.session_id
+  );
+
+  // Step 4: Checker — pick best candidate
+  const candidates = writerOutput.candidates || [writerOutput];
+  const best = engine.selectBestCandidate(candidates, state);
+  const item = best.candidate;
+
+  // Record the question in state
+  engine.recordQuestion(state, {
+    pair: routerOutput.target_pair || null,
+    splitter: routerOutput.target_splitter || null,
+    domain: routerOutput.target_domain || null,
+    option_a: item.a,
+    option_b: item.b,
+    predicted_signal_a: item.predicted_signal_a || [],
+    predicted_signal_b: item.predicted_signal_b || [],
+    type_family: routerOutput.target_pair || null
+  });
+
+  return {
+    done: false,
+    question: { a: item.a, b: item.b },
+    metadata: {
+      pair: routerOutput.target_pair,
+      splitter: routerOutput.target_splitter,
+      domain: routerOutput.target_domain,
+      purpose: routerOutput.question_purpose,
+      reasoning: routerOutput.reasoning,
+      checker_issues: best.issues,
+      predicted_signal_a: item.predicted_signal_a,
+      predicted_signal_b: item.predicted_signal_b
+    },
+    state
+  };
 }
 
 // ─── Server ─────────────────────────────────────────────────────────
@@ -323,47 +300,157 @@ const server = http.createServer(async (req, res) => {
     try {
       const data = await readBody(req);
       const id = crypto.randomUUID();
-      insertSession.run(id, data.name || null);
-      json(res, 201, { id });
+      const name = data.name || 'Anonymous';
+      insertSession.run(id, name);
+
+      // Create state
+      const state = engine.createState(id, name);
+      sessions.set(id, state);
+
+      json(res, 201, { id, static_questions: STATIC_QUESTIONS });
     } catch (e) {
       const id = crypto.randomUUID();
       insertSession.run(id, null);
-      json(res, 201, { id });
+      const state = engine.createState(id, 'Anonymous');
+      sessions.set(id, state);
+      json(res, 201, { id, static_questions: STATIC_QUESTIONS });
     }
     return;
   }
 
-  // ── Save question (on load) ──
-  if (req.method === 'POST' && req.url === '/api/questions') {
+  // ── Submit calibration answers + get first adaptive question ──
+  if (req.method === 'POST' && req.url === '/api/calibration') {
     try {
       const data = await readBody(req);
-      insertQuestion.run(
-        data.session_id, data.question_number,
-        data.option_a, data.option_b,
-        JSON.stringify(data.informs || []),
-        data.reasoning || '',
-        JSON.stringify(data.scores || {})
-      );
-      json(res, 201, { ok: true });
+      const state = sessions.get(data.session_id);
+      if (!state) { json(res, 404, { error: 'Session not found' }); return; }
+
+      // Save calibration questions to DB
+      for (const ans of data.answers) {
+        insertQuestion.run(
+          data.session_id, ans.question_number,
+          ans.option_a, ans.option_b,
+          JSON.stringify([ans.dimension]), 'Static calibration', '{}'
+        );
+        updateQuestionAnswer.run(
+          ans.picked, ans.chosen_text, ans.unchosen_text,
+          ans.response_time_ms || 0,
+          data.session_id, ans.question_number
+        );
+      }
+
+      // Apply calibration to state (behavioral signals only, posterior stays flat)
+      engine.applyCalibration(state, data.answers);
+
+      // Build calibration data for router
+      const calibrationData = data.answers.map(a => ({
+        dimension: a.dimension,
+        picked: a.picked,
+        chosen_text: a.chosen_text,
+        unchosen_text: a.unchosen_text,
+        response_time_ms: a.response_time_ms,
+        signal: a.signal
+      }));
+
+      // Generate first adaptive question
+      const result = await generateNextQuestion(state, null, calibrationData);
+
+      if (result.done) {
+        json(res, 200, { done: true, result: result.result, state: sanitizeState(state) });
+      } else {
+        // Save question to DB
+        insertQuestion.run(
+          data.session_id, state.question_number,
+          result.question.a, result.question.b,
+          JSON.stringify([result.metadata.pair, result.metadata.splitter].filter(Boolean)),
+          result.metadata.reasoning || '',
+          JSON.stringify(sanitizeState(state))
+        );
+        json(res, 200, {
+          done: false,
+          question: result.question,
+          metadata: result.metadata,
+          state: sanitizeState(state)
+        });
+      }
     } catch (err) {
-      json(res, 400, { error: err.message });
+      console.error('Calibration error:', err);
+      json(res, 500, { error: err.message });
     }
     return;
   }
 
-  // ── Save answer (on pick) ──
-  if (req.method === 'POST' && req.url === '/api/questions/answer') {
+  // ── Submit answer + get next question ──
+  if (req.method === 'POST' && req.url === '/api/answer') {
     try {
       const data = await readBody(req);
+      const state = sessions.get(data.session_id);
+      if (!state) { json(res, 404, { error: 'Session not found' }); return; }
+
+      // Record answer in state
+      engine.recordAnswer(state, data.picked);
+
+      // DETERMINISTIC: Apply score changes based on predicted signals
+      engine.applyAnswerToScores(state, data.picked);
+
+      // Save answer to DB
       updateQuestionAnswer.run(
         data.picked, data.chosen_text, data.unchosen_text,
         data.response_time_ms || 0,
-        data.session_id, data.question_number
+        data.session_id, state.question_number
       );
-      json(res, 200, { ok: true });
+
+      // Build last answer description for router (for pattern inference only)
+      const lastQ = state.question_history[state.question_history.length - 1];
+      const sigA = lastQ?.predicted_signal_a?.length ? `Types favored by A: [${lastQ.predicted_signal_a.join(',')}]` : '';
+      const sigB = lastQ?.predicted_signal_b?.length ? `Types favored by B: [${lastQ.predicted_signal_b.join(',')}]` : '';
+      const pairInfo = lastQ?.pair ? `Target pair: ${lastQ.pair}. Splitter: ${lastQ.splitter || 'unknown'}.` : '';
+      const lastAnswer = `${pairInfo} ${sigA}. ${sigB}. Picked ${data.picked.toUpperCase()}: "${data.chosen_text}". Response time: ${((data.response_time_ms || 0) / 1000).toFixed(1)}s. NOTE: Type scores have already been updated deterministically. Your job is to update behavioral signals, threat/move/cost patterns, and decide the next routing target only.`;
+
+      // Generate next question (or finish)
+      const result = await generateNextQuestion(state, lastAnswer, null);
+
+      if (result.done) {
+        // Save completion
+        const r = result.result;
+        updateSessionComplete.run(
+          state.question_number,
+          r.type, r.wing, r.wing_name || '', r.summary || '',
+          JSON.stringify(sanitizeState(state)),
+          data.session_id
+        );
+
+        json(res, 200, { done: true, result: r, state: sanitizeState(state) });
+      } else {
+        // Save question to DB
+        insertQuestion.run(
+          data.session_id, state.question_number,
+          result.question.a, result.question.b,
+          JSON.stringify([result.metadata.pair, result.metadata.splitter].filter(Boolean)),
+          result.metadata.reasoning || '',
+          JSON.stringify(sanitizeState(state))
+        );
+
+        json(res, 200, {
+          done: false,
+          question: result.question,
+          metadata: result.metadata,
+          state: sanitizeState(state)
+        });
+      }
     } catch (err) {
-      json(res, 400, { error: err.message });
+      console.error('Answer error:', err);
+      json(res, 500, { error: err.message });
     }
+    return;
+  }
+
+  // ── Get session state (debug) ──
+  if (req.method === 'GET' && req.url.startsWith('/api/state/')) {
+    const id = req.url.split('/api/state/')[1];
+    const state = sessions.get(id);
+    if (!state) { json(res, 404, { error: 'Session not found' }); return; }
+    json(res, 200, sanitizeState(state));
     return;
   }
 
@@ -375,27 +462,6 @@ const server = http.createServer(async (req, res) => {
         data.session_id, data.question_number,
         data.rating || null, data.complaint || '',
         data.option_a || '', data.option_b || ''
-      );
-      if (data.rating) {
-        updateQuestionRating.run(data.rating, data.session_id, data.question_number);
-      }
-      json(res, 200, { ok: true });
-    } catch (err) {
-      json(res, 400, { error: err.message });
-    }
-    return;
-  }
-
-  // ── Complete session ──
-  if (req.method === 'POST' && req.url === '/api/sessions/complete') {
-    try {
-      const data = await readBody(req);
-      updateSessionComplete.run(
-        data.question_count,
-        data.guessed_type, data.guessed_wing,
-        data.guessed_wing_name || '', data.guessed_summary || '',
-        JSON.stringify(data.final_scores || {}),
-        data.session_id
       );
       json(res, 200, { ok: true });
     } catch (err) {
@@ -438,12 +504,12 @@ const server = http.createServer(async (req, res) => {
 
   // ── List sessions (calibration dashboard) ──
   if (req.method === 'GET' && req.url === '/api/sessions') {
-    const sessions = getAllSessions.all();
-    const total = sessions.filter(s => s.actual_type != null).length;
-    const correctType = sessions.filter(s => s.correct_type === 1).length;
-    const correctWing = sessions.filter(s => s.correct_wing === 1).length;
+    const allSessions = getAllSessions.all();
+    const total = allSessions.filter(s => s.actual_type != null).length;
+    const correctType = allSessions.filter(s => s.correct_type === 1).length;
+    const correctWing = allSessions.filter(s => s.correct_wing === 1).length;
     json(res, 200, {
-      sessions,
+      sessions: allSessions,
       calibration: {
         total_calibrated: total,
         type_accuracy: total > 0 ? (correctType / total * 100).toFixed(1) : null,
@@ -453,72 +519,38 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // ── LLM proxy ──
-  if (req.method === 'POST' && req.url === '/api/chat') {
-    try {
-      const { messages, session_id } = await readBody(req);
-
-      // Save messages to db
-      if (session_id && messages.length > 0) {
-        const last = messages[messages.length - 1];
-        insertMessage.run(session_id, last.role, typeof last.content === 'string' ? last.content : JSON.stringify(last.content));
-      }
-
-      // Trim history: strip scores from older assistant messages, keep only latest
-      const trimmed = messages.map((msg, i) => {
-        if (msg.role !== 'assistant') return msg;
-        // Keep the last assistant message intact
-        const isLast = messages.slice(i + 1).every(m => m.role !== 'assistant');
-        if (isLast) return msg;
-        // Strip scores from older assistant messages to save tokens
-        try {
-          const parsed = JSON.parse(msg.content);
-          const compact = {
-            status: parsed.status,
-            question_number: parsed.question_number,
-            reasoning: parsed.reasoning,
-            informs: parsed.informs,
-            question: parsed.question
-          };
-          return { role: 'assistant', content: JSON.stringify(compact) };
-        } catch {
-          return msg;
-        }
-      });
-
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1024,
-          system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
-          messages: trimmed
-        })
-      });
-
-      const data = await response.json();
-
-      // Save assistant response
-      if (session_id && data.content?.[0]?.text) {
-        insertMessage.run(session_id, 'assistant', data.content[0].text);
-      }
-
-      json(res, 200, data);
-    } catch (err) {
-      json(res, 500, { error: err.message });
-    }
-    return;
-  }
-
   res.writeHead(404);
   res.end('Not found');
 });
 
+function sanitizeState(state) {
+  return {
+    question_number: state.question_number,
+    phase: state.phase,
+    budget_remaining: state.budget_remaining,
+    posterior: state.posterior,
+    behavioral: state.behavioral,
+    threat_pattern: state.threat_pattern,
+    move_pattern: state.move_pattern,
+    repeated_cost_pattern: state.repeated_cost_pattern,
+    target_pair: state.target_pair,
+    target_splitter: state.target_splitter,
+    target_pair_questions: state.target_pair_questions,
+    pair_resolved: state.pair_resolved,
+    likely_wing: state.likely_wing,
+    wing_confidence: state.wing_confidence,
+    contradiction_count: state.contradiction_count,
+    contradictions: state.contradictions,
+    repair_mode: state.repair_mode,
+    top_type: state.top_type,
+    top_two_gap: state.top_two_gap,
+    untested_types_count: state.untested_types_count,
+    types_tested: state.types_tested,
+    pairs_tested: state.pairs_tested,
+    done_gates: engine.checkDoneGates(state)
+  };
+}
+
 server.listen(3456, () => {
-  console.log('Enneagram quiz server running at http://localhost:3456');
+  console.log('Enneagram v2 engine running at http://localhost:3456');
 });
