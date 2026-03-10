@@ -239,6 +239,7 @@ ${answerHistory || 'No answers yet — this is the first question.'}
 - No commas or dashes in option text
 - Each option is one clean sentence or phrase
 - Concrete behavioral differences over abstract identity language
+- Ground the question in the specified domain with real scenarios (e.g. relationship domain → mention partner, friend, or family; work domain → mention projects, colleagues, deadlines; social domain → mention groups, events, conversations)
 - If you can tell which option a "nice person" would pick the item is bad
 
 ## WEIGHTED MULTI-TYPE SIGNALS (CRITICAL — READ CAREFULLY)
