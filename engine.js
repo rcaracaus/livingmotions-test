@@ -1019,6 +1019,150 @@ function buildStateSummary(state) {
   };
 }
 
+// ─── EIG (Expected Information Gain) Question Selector ──────────────
+
+function entropy(posterior) {
+  let h = 0;
+  for (const t of TYPES) {
+    const p = posterior[t] / 100;
+    if (p > 0) h -= p * Math.log2(p);
+  }
+  return h;
+}
+
+function simulatePick(posterior, signals, boost, lower) {
+  // Clone posterior
+  const sim = {};
+  for (const t of TYPES) sim[t] = posterior[t];
+
+  // Apply favored signals
+  const favoredEntries = typeof signals.favored === 'object' && !Array.isArray(signals.favored)
+    ? Object.entries(signals.favored) : [];
+  const unfavoredEntries = typeof signals.unfavored === 'object' && !Array.isArray(signals.unfavored)
+    ? Object.entries(signals.unfavored) : [];
+
+  // Cap total weight
+  const MAX_W = 2.0;
+  const totalFavored = favoredEntries.reduce((s, [, w]) => s + w, 0);
+  const scaleFavored = totalFavored > MAX_W ? MAX_W / totalFavored : 1;
+  const totalUnfavored = unfavoredEntries.reduce((s, [, w]) => s + w, 0);
+  const scaleUnfavored = totalUnfavored > MAX_W ? MAX_W / totalUnfavored : 1;
+
+  for (const [type, weight] of favoredEntries) {
+    const t = parseInt(type);
+    sim[t] = Math.min(99, sim[t] + boost * weight * scaleFavored);
+  }
+  for (const [type, weight] of unfavoredEntries) {
+    const t = parseInt(type);
+    sim[t] = Math.max(0, sim[t] - lower * weight * scaleUnfavored);
+  }
+
+  // Normalize
+  const total = TYPES.reduce((s, t) => s + sim[t], 0);
+  if (total > 0) {
+    for (const t of TYPES) sim[t] = (sim[t] / total) * 100;
+  }
+
+  return sim;
+}
+
+function calcEIG(candidate, posterior) {
+  const currentEntropy = entropy(posterior);
+
+  // Simulate picking A
+  const postA = simulatePick(posterior, {
+    favored: candidate.predicted_signal_a,
+    unfavored: candidate.predicted_signal_b
+  }, BOOST_AMOUNT, LOWER_AMOUNT);
+
+  // Simulate picking B
+  const postB = simulatePick(posterior, {
+    favored: candidate.predicted_signal_b,
+    unfavored: candidate.predicted_signal_a
+  }, BOOST_AMOUNT, LOWER_AMOUNT);
+
+  // Estimate probability of picking A vs B based on current posterior
+  // Weight by how much the current posterior favors each option's types
+  const signalA = candidate.predicted_signal_a || {};
+  const signalB = candidate.predicted_signal_b || {};
+  let weightA = 0, weightB = 0;
+  for (const [type, w] of Object.entries(signalA)) {
+    weightA += (posterior[parseInt(type)] / 100) * w;
+  }
+  for (const [type, w] of Object.entries(signalB)) {
+    weightB += (posterior[parseInt(type)] / 100) * w;
+  }
+  const totalW = weightA + weightB;
+  const pA = totalW > 0 ? weightA / totalW : 0.5;
+  const pB = 1 - pA;
+
+  const expectedEntropy = pA * entropy(postA) + pB * entropy(postB);
+  return currentEntropy - expectedEntropy;
+}
+
+function selectByEIG(questionBank, state) {
+  const asked = new Set(
+    state.question_history.map(q => `${q.option_a}|||${q.option_b}`)
+  );
+
+  // Get capped pairs
+  const cappedPairs = new Set(
+    Object.entries(state.pair_question_counts)
+      .filter(([, c]) => c >= PAIR_CAP)
+      .map(([p]) => p)
+  );
+
+  // Get recently used domains
+  const recentDomains = state.domains_used.slice(-2);
+
+  // Score all candidates
+  const scored = [];
+  for (const entry of questionBank) {
+    const combo = entry.combo;
+
+    // Skip capped pairs
+    if (combo.pair && cappedPairs.has(combo.pair)) continue;
+
+    for (const candidate of entry.candidates) {
+      // Skip already asked
+      const key = `${candidate.a}|||${candidate.b}`;
+      if (asked.has(key)) continue;
+
+      // Calculate EIG
+      let eig = calcEIG(candidate, state.posterior);
+
+      // Domain diversity bonus: penalize recently used domains
+      if (recentDomains.includes(combo.domain)) {
+        eig *= 0.8;
+      }
+
+      // Neglected type bonus: boost questions that touch neglected types
+      const neglected = TYPES.filter(t => state.type_signal_counts[t] <= 1);
+      if (neglected.length > 0) {
+        const allSignals = { ...candidate.predicted_signal_a, ...candidate.predicted_signal_b };
+        const touchesNeglected = neglected.some(t => allSignals[t] !== undefined);
+        if (touchesNeglected) eig *= 1.3;
+      }
+
+      // Wing question bonus: if we have a clear leader but no wing
+      if (state.top_two_gap > 20 && state.wing_confidence < 60 && combo.type === 'wing') {
+        eig *= 1.5;
+      }
+
+      scored.push({
+        candidate,
+        combo,
+        eig
+      });
+    }
+  }
+
+  // Sort by EIG descending
+  scored.sort((a, b) => b.eig - a.eig);
+
+  return scored[0] || null;
+}
+
 module.exports = {
   TYPES,
   TYPE_PROFILES,
@@ -1056,5 +1200,7 @@ module.exports = {
   recordAnswer,
   checkCandidate,
   selectBestCandidate,
-  buildStateSummary
+  buildStateSummary,
+  calcEIG,
+  selectByEIG
 };
