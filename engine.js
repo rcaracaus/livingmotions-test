@@ -488,8 +488,18 @@ function applyRouterUpdate(state, update) {
     }
   }
 
-  // Wing updates
-  if (update.likely_wing !== undefined) state.likely_wing = update.likely_wing;
+  // Wing updates — validate wing is adjacent to top type
+  if (update.likely_wing !== undefined && update.likely_wing !== null) {
+    const topType = state.top_type;
+    if (topType) {
+      const wg = WING_GUIDE[topType];
+      const validWings = wg ? [wg.low.wing, wg.high.wing] : [];
+      if (validWings.includes(update.likely_wing)) {
+        state.likely_wing = update.likely_wing;
+      }
+      // else: ignore invalid wing from LLM
+    }
+  }
   if (update.wing_confidence !== undefined) state.wing_confidence = update.wing_confidence;
 
   // Normalize posterior to sum to 100
