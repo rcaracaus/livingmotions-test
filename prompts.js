@@ -5,9 +5,7 @@ const { PAIR_AXES, PROBE_GUIDE, WING_GUIDE, TRIADS, HORNEVIAN, HARMONIC } = requ
 
 // ─── Router Prompt ──────────────────────────────────────────────────
 
-function buildRouterPrompt(stateSummary, lastAnswer, calibrationData) {
-  const isFirstAdaptive = !!calibrationData;
-
+function buildRouterPrompt(stateSummary, lastAnswer) {
   let context = `You are the routing engine for an Enneagram typing system. You decide WHAT to test next. You do NOT write questions.
 
 ## Your job
@@ -23,13 +21,20 @@ Type is inferred from: threat → move → repeated cost
 
 ## Priority order
 
-1. If repair_mode is true: target the cost-pattern conflict
-2. If untested_types >= 4 and question < 10: force a broad triad/stance cut
-3. **If required_triad_pairs is non-empty: you MUST target one of those pairs.** Same-triad types (gut [8,9,1], heart [2,3,4], head [5,6,7]) share behavioral profiles and CANNOT be distinguished without direct pair testing. This is mandatory — the engine will block completion until these pairs are tested.
-4. If rephrase is due: pick the best rephrase target
-5. If a clear pair ambiguity exists (top_two_gap < 20): target that pair with its best splitter
-6. If wing needs work (wing_confidence < 60 and type_confidence > 50): target wing split
-7. Otherwise: target the highest remaining ambiguity
+1. If neglected_types is non-empty and question >= 8: force a broad cut that includes at least one neglected type. A type with ≤1 signal touch after 8+ questions is a blind spot — the system cannot confirm or eliminate it. Pick a triad/stance grouping that covers the neglected type(s).
+2. If repair_mode is true: target the cost-pattern conflict
+3. If untested_types >= 4 and question < 8: force a broad triad/stance cut
+4. **If required_triad_pairs is non-empty: you MUST target one of those pairs.** Same-triad types (gut [8,9,1], heart [2,3,4], head [5,6,7]) share behavioral profiles and CANNOT be distinguished without direct pair testing. This is mandatory — the engine will block completion until these pairs are tested.
+5. If rephrase is due: pick the best rephrase target
+6. If a clear pair ambiguity exists (top_two_gap < 20): target that pair with its best splitter
+7. If wing needs work (wing_confidence < 60 and type_confidence > 50): target wing split
+8. Otherwise: target the highest remaining ambiguity
+
+## PAIR CAP RULE (MANDATORY)
+
+Each type pair can be tested a MAXIMUM of 3 times. After 3 questions on the same pair, you MUST move to a different pair or a broad cut. The capped_pairs list shows which pairs have hit this limit.
+
+If a pair has been tested 3 times with inconsistent results (e.g. person picked A twice and B once), this means NEITHER type in that pair may be correct. You should test the leading type against an UNTESTED or UNDERTESTED type instead.
 
 ## Tunnel prevention
 
@@ -45,22 +50,18 @@ For broad cuts, use these groupings:
 
 A single broad question can move 6+ types at once.`;
 
-  if (isFirstAdaptive) {
-    context += `
-
-## Calibration data
-
-The person just answered 5 calibration questions. Here are their answers:
-
-${JSON.stringify(calibrationData, null, 2)}
-
-IMPORTANT: Calibration sets behavioral signal readings ONLY. The type posterior is flat (all types at ~11%). Do NOT eliminate any types based on calibration. Analyze the behavioral signals and decide what broad discrimination question to ask first.`;
-  } else {
+  if (lastAnswer) {
     context += `
 
 ## Last answer
 
 ${lastAnswer}`;
+  } else {
+    context += `
+
+## First question
+
+This is the first question. The type posterior is flat (all types at ~11%). Start with a broad discrimination question to begin separating types.`;
   }
 
   context += `
@@ -89,9 +90,6 @@ You MUST respond with valid JSON only. No markdown, no explanation.
   "reasoning": "<1-2 sentences: what distinction matters most right now and why>",
   "types_raised": [{"type": <number>, "amount": <1-15>}],
   "types_lowered": [{"type": <number>, "amount": <1-15>}],
-  "behavioral_updates": {
-    "<dimension>": {"value": "<value>", "confidence": <number>}
-  },
   "threat_pattern": "<enum value or null if unchanged>",
   "move_pattern": "<enum value or null if unchanged>",
   "repeated_cost_pattern": "<enum value or null if unchanged>",
@@ -99,7 +97,7 @@ You MUST respond with valid JSON only. No markdown, no explanation.
   "wing_confidence": <number or null>
 }
 
-For the first question after calibration, types_raised and types_lowered should be empty (posterior stays flat). Only set behavioral_updates from calibration signals.
+For the first question, types_raised and types_lowered should be empty (posterior stays flat).
 For subsequent questions, update types_raised/lowered based on the answer you just received.`;
 
   return context;
@@ -131,11 +129,15 @@ ${axis ? `Pole B (type ${types[1]}): ${axis.probe_b}` : ''}
 Target: ${probeA?.target || 'unknown'}
 Latent probes: ${(probeA?.latent_probes || []).join(' | ')}
 Killer probe: ${probeA?.killer_probe || 'none'}
+Under stress: ${probeA?.stress_arrow || 'unknown'}
+Core avoidance: ${probeA?.core_avoidance || 'unknown'}
 
 ## Type ${types[1]} probe context
 Target: ${probeB?.target || 'unknown'}
 Latent probes: ${(probeB?.latent_probes || []).join(' | ')}
-Killer probe: ${probeB?.killer_probe || 'none'}`;
+Killer probe: ${probeB?.killer_probe || 'none'}
+Under stress: ${probeB?.stress_arrow || 'unknown'}
+Core avoidance: ${probeB?.core_avoidance || 'unknown'}`;
   }
 
   // Wing context if needed
@@ -176,6 +178,20 @@ ${routerOutput.reasoning || ''}`;
     `A: "${q.option_a}" / B: "${q.option_b}"`
   ).join('\n');
 
+  // Answer history for context
+  const answerHistory = state.question_history
+    .filter(q => q.picked)
+    .map(q => {
+      const chosenText = q.picked === 'a' ? q.option_a : q.option_b;
+      return `Q${q.question_number} (${q.pair || 'broad'}): picked ${q.picked.toUpperCase()} — "${chosenText}"`;
+    }).join('\n');
+
+  // Current type distribution
+  const sorted = [1,2,3,4,5,6,7,8,9]
+    .map(t => ({ type: t, prob: state.posterior[t] }))
+    .sort((a, b) => b.prob - a.prob);
+  const typeDistribution = sorted.map(t => `${t.type}:${Math.round(t.prob)}%`).join(' ');
+
   const prompt = `You are a forced-choice item writer for an Enneagram typing system. You generate candidate questions. You do NOT decide what to test — that was already decided.
 
 ## Your job
@@ -191,6 +207,22 @@ ${routerOutput.reasoning ? `Router reasoning: ${routerOutput.reasoning}` : ''}
 ${probeContext}
 ${wingContext}
 ${broadContext}
+
+## Person's emerging pattern
+Type distribution: ${typeDistribution}
+Threat: ${state.threat_pattern || 'unknown'}
+Move: ${state.move_pattern || 'unknown'}
+Cost: ${state.repeated_cost_pattern || 'unknown'}
+
+## Signal coverage (IMPORTANT)
+${Object.entries(state.type_signal_counts || {}).map(([t, c]) => `Type ${t}: ${c} signal touches`).join('\n')}
+${(() => {
+  const neglected = Object.entries(state.type_signal_counts || {}).filter(([, c]) => c <= 1).map(([t]) => t);
+  return neglected.length > 0 ? `\nNEGLECTED TYPES (≤1 signal touch): [${neglected.join(', ')}] — Try to include at least one neglected type as a tertiary signal (0.1-0.3) in your options. Every question should help eliminate OR confirm these types.` : '';
+})()}
+
+## Answer history
+${answerHistory || 'No answers yet — this is the first question.'}
 
 ## Item writing rules — follow ALL of these exactly
 
@@ -208,6 +240,31 @@ ${broadContext}
 - Each option is one clean sentence or phrase
 - Concrete behavioral differences over abstract identity language
 - If you can tell which option a "nice person" would pick the item is bad
+
+## WEIGHTED MULTI-TYPE SIGNALS (CRITICAL — READ CAREFULLY)
+
+For each option, you MUST list ALL Enneagram types it could signal — not just the target pair. Each option should typically signal 3-5 types. Use weights from 0.0 to 1.0:
+- 1.0 = this option is a primary signal for this type (the target pair type)
+- 0.5-0.7 = this option moderately signals this type
+- 0.2-0.4 = this option weakly signals this type
+- 0.1 = faint but real signal for this type
+
+The target pair types should always be 1.0. But EVERY option has multiple secondary and tertiary type signals — find them all.
+
+Think about each option: "What other types would also pick this?" For example:
+- "I step back to analyze what went wrong" → 5 (detachment/conservation 1.0), 6 (troubleshooting 0.6), 1 (correcting errors 0.4), 3 (performance review 0.2)
+- Duty/responsibility language → also signals 1 (standards) and 6 (loyalty/duty)
+- Worry about credibility → also signals 6 (security anxiety) and 3 (image)
+- Withdrawing to think → also signals 5 (conservation), 6 (analysis), and 9 (retreating)
+- Helping others → also signals 2 (connection), 9 (merging), and 1 (doing the right thing)
+- Wanting recognition → also signals 3 (image), 8 (impact), and 7 (excitement)
+- Self-criticism → also signals 1 (inner critic), 6 (self-doubt), and 4 (deficiency)
+- Seeking comfort → also signals 9 (settling), 2 (contact-seeking), and 7 (pain avoidance)
+- Opening new possibilities when stuck → signals 7 (options as escape), 3 (pivoting to win), and 9 (avoiding the hard thing)
+- Reframing negatives into positives → signals 7 (pain avoidance), 2 (maintaining harmony), and 9 (smoothing over)
+- Feeling trapped by routine/commitment → signals 7 (constraint pain), 4 (longing for something more), and 8 (resisting control)
+
+If an option has fewer than 3 types tagged, you are almost certainly missing signals. This is the most important part of your output — the system uses secondary and tertiary signals to detect types that aren't being directly tested. Every forced-choice answer reveals information about multiple types simultaneously.
 
 ## Probe-to-item conversion
 
@@ -228,8 +285,8 @@ Valid JSON only. No markdown.
     {
       "a": "<option A text>",
       "b": "<option B text>",
-      "predicted_signal_a": [<type numbers option A favors>],
-      "predicted_signal_b": [<type numbers option B favors>],
+      "predicted_signal_a": {"<type>": <weight>, "<type>": <weight>},
+      "predicted_signal_b": {"<type>": <weight>, "<type>": <weight>},
       "domain": "${domain}",
       "target_pair": "${pair || 'broad'}",
       "target_splitter": "${splitter || 'broad'}"
@@ -287,8 +344,8 @@ Valid JSON only.
     {
       "a": "<option A — should correspond to same pole as original A>",
       "b": "<option B — should correspond to same pole as original B>",
-      "predicted_signal_a": [<types>],
-      "predicted_signal_b": [<types>],
+      "predicted_signal_a": {"<type>": <weight>, ...},
+      "predicted_signal_b": {"<type>": <weight>, ...},
       "domain": "${newDomain}",
       "target_pair": "${rephraseTarget.pair}",
       "target_splitter": "${rephraseTarget.splitter}",
@@ -318,9 +375,6 @@ Wing: ${wingName}
 
 ## State summary
 ${JSON.stringify(stateSummary, null, 2)}
-
-## Behavioral signals
-${Object.entries(state.behavioral).map(([k, v]) => `${k}: ${v.value} (${v.confidence}%)`).join('\n')}
 
 ## Patterns detected
 Threat: ${state.threat_pattern || 'not identified'}

@@ -272,36 +272,11 @@ function renderDiagnostics() {
     </div>`;
   }).join('');
 
-  // Behavioral signals
-  const b = s.behavioral || {};
-  const dims = [
-    { key: 'anger_awareness', label: 'anger' },
-    { key: 'pressure_stance', label: 'pressure' },
-    { key: 'good_day_anchor', label: 'good day' },
-    { key: 'hurt_response', label: 'hurt' },
-    { key: 'no_demand_pattern', label: 'no demand' }
-  ];
-  const sigRows = dims.map(d => {
-    const sig = b[d.key] || {};
-    const val = sig.value && sig.value !== 'null' ? sig.value : null;
-    const conf = sig.confidence || 0;
-    return `<div class="sig-row">
-      <span class="sig-name">${d.label}</span>
-      <span class="sig-pill ${val ? 'set' : 'unset'}">${val || 'unknown'}</span>
-      <span class="sig-conf">${conf}%</span>
-    </div>`;
-  }).join('');
-
   // Status tags
   const tags = [];
   if (s.target_pair) {
     const cls = s.pair_resolved ? 'ok' : 'warn';
     tags.push(`<span class="status-tag ${cls}">pair: ${s.target_pair} (${s.target_pair_questions}q${s.pair_resolved ? ' done' : ''})</span>`);
-  }
-  if (s.contradiction_count >= 2) {
-    tags.push(`<span class="status-tag bad">${s.contradiction_count} contradictions: ${(s.contradictions||[]).join(', ')}</span>`);
-  } else if (s.contradiction_count === 0 && s.question_number > 5) {
-    tags.push(`<span class="status-tag ok">no contradictions</span>`);
   }
   if (s.repair_mode) tags.push(`<span class="status-tag warn">repair mode</span>`);
 
@@ -314,6 +289,37 @@ function renderDiagnostics() {
   // Badges
   const wc = s.wing_confidence || 0;
   const wingLabel = s.likely_wing ? `w${s.likely_wing}` : '?';
+
+  // Signals
+  const sigA = state.lastMetadata?.predicted_signal_a;
+  const sigB = state.lastMetadata?.predicted_signal_b;
+  const formatSig = (sig) => {
+    if (!sig) return '';
+    if (typeof sig === 'object' && !Array.isArray(sig)) {
+      return Object.entries(sig)
+        .sort((a, b) => b[1] - a[1])
+        .map(([t, w]) => `<span style="color:${w >= 0.8 ? '#4a9eff' : w >= 0.5 ? '#a78bfa' : '#555'}">${t}:${w}</span>`)
+        .join(' ');
+    }
+    if (Array.isArray(sig)) return sig.map(t => `<span style="color:#4a9eff">${t}</span>`).join(' ');
+    return '';
+  };
+  const signalsSection = (sigA || sigB) ? `<div class="d-section">
+    <div class="d-heading">Weighted signals (this question)</div>
+    <div style="font-family:monospace;font-size:0.65rem;line-height:1.8">
+      <div><span style="color:#555">A →</span> ${formatSig(sigA) || '<span style="color:#333">none</span>'}</div>
+      <div><span style="color:#555">B →</span> ${formatSig(sigB) || '<span style="color:#333">none</span>'}</div>
+    </div>
+  </div>` : '';
+
+  // Pair counts
+  const pairCounts = s.pair_question_counts || {};
+  const pairCountSection = Object.keys(pairCounts).length > 0 ? `<div class="d-section">
+    <div class="d-heading">Pair questions</div>
+    <div class="badge-row">${Object.entries(pairCounts).map(([p, c]) =>
+      `<span class="badge"><span class="b-label">${p}</span><span class="b-val ${c >= 3 ? 'low' : 'high'}">${c}${c >= 3 ? ' CAP' : ''}</span></span>`
+    ).join('')}</div>
+  </div>` : '';
 
   // Reasoning
   const reasoning = state.lastMetadata?.reasoning
@@ -340,13 +346,11 @@ function renderDiagnostics() {
       </div>
     </div>
     <div class="d-section">
-      <div class="d-heading">Behavioral signals</div>
-      ${sigRows}
-    </div>
-    <div class="d-section">
       <div class="d-heading">Checks</div>
       <div class="status-row">${tags.join('') || '<span class="status-tag" style="color:#333">pending</span>'}</div>
     </div>
+    ${signalsSection}
+    ${pairCountSection}
     ${patterns.length > 0 ? `<div class="d-section"><div class="d-heading">Patterns</div><div class="pattern-row">${patterns.join('')}</div></div>` : ''}
     ${reasoning}
     ${gateSection}
@@ -636,15 +640,26 @@ async function startQuiz(name) {
   if (!name) { $('#name-input').focus(); return; }
   renderLoading();
 
-  const res = await api('POST', '/api/sessions', { name });
-  state.sessionId = res.id;
-  state.name = name;
-  state.staticQuestions = res.static_questions || [];
-  state.staticAnswers = [];
-  log('Session: ' + res.id + ' (' + name + ')');
+  try {
+    const res = await api('POST', '/api/sessions', { name });
+    state.sessionId = res.id;
+    state.name = name;
+    log('Session: ' + res.id + ' (' + name + ')');
 
-  if (state.staticQuestions.length > 0) {
-    renderStaticQuestion(state.staticQuestions[0]);
+    if (res.error) throw new Error(res.error);
+
+    state.serverState = res.state;
+    state.questionIndex = res.state.question_number;
+
+    if (res.done) {
+      renderResult(res.result, res.state);
+    } else {
+      state.lastMetadata = res.metadata;
+      renderAdaptiveQuestion(res.question, res.metadata);
+    }
+  } catch (err) {
+    log('Error: ' + err.message);
+    content().innerHTML = `<div class="loading" style="color:#ff4a4a">Error: ${err.message}. Refresh to retry.</div>`;
   }
 }
 

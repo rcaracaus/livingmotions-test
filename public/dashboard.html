@@ -118,45 +118,11 @@ body {
 .post-row.top .pr-label { color: #4a9eff; }
 .post-row.top .pr-pct { color: #4a9eff; }
 
-/* ── Behavioral Signals ── */
-.signals-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 0.75rem; margin-bottom: 1rem;
-}
-.signal-item {
-  background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 8px; padding: 0.6rem 0.8rem;
-}
-.signal-item .si-name {
-  font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em;
-  color: #555; margin-bottom: 4px; font-family: monospace;
-}
-.signal-item .si-value {
-  font-size: 0.85rem; font-family: monospace; margin-bottom: 6px;
-}
-.signal-item .si-conf-bar {
-  height: 3px; background: #1a1a1a; border-radius: 2px; overflow: hidden;
-}
-.signal-item .si-conf-fill {
-  height: 100%; border-radius: 2px; transition: width 0.4s;
-}
-.signal-item .si-conf-label {
-  font-size: 0.6rem; font-family: monospace; color: #444; margin-top: 3px;
-}
-
 /* ── Pattern Tags ── */
 .pattern-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
 .ptag {
   font-size: 0.7rem; padding: 4px 10px; border-radius: 6px; font-family: monospace;
   background: #110d1f; color: #a78bfa; border: 1px solid rgba(167,139,250,0.2);
-}
-
-/* ── Contradictions ── */
-.contradictions { margin-bottom: 1rem; }
-.contradictions .c-count {
-  font-size: 0.8rem; font-family: monospace; color: #ef4444; margin-bottom: 4px;
-}
-.contradictions .c-list {
-  font-size: 0.75rem; color: #888; font-family: monospace;
 }
 
 /* ── Wing Info ── */
@@ -513,27 +479,6 @@ function renderProfileSection(profileTitle, fs) {
     </div>`;
   }).join('');
 
-  // Behavioral signals
-  const behavioral = fs.behavioral || {};
-  const dims = [
-    { key: 'anger_awareness', label: 'Anger Awareness' },
-    { key: 'pressure_stance', label: 'Pressure Stance' },
-    { key: 'good_day_anchor', label: 'Good Day Anchor' },
-    { key: 'hurt_response', label: 'Hurt Response' },
-    { key: 'no_demand_pattern', label: 'No Demand Pattern' }
-  ];
-  const signalCards = dims.map(d => {
-    const sig = behavioral[d.key] || {};
-    const val = sig.value && sig.value !== 'null' ? sig.value : 'unknown';
-    const conf = sig.confidence || 0;
-    const color = confColor(conf);
-    return `<div class="signal-item">
-      <div class="si-name">${d.label}</div>
-      <div class="si-value" style="color:${val !== 'unknown' ? '#e0e0e0' : '#333'}">${val}</div>
-      <div class="si-conf-bar"><div class="si-conf-fill" style="width:${conf}%;background:${color}"></div></div>
-      <div class="si-conf-label">${conf}% confidence</div>
-    </div>`;
-  }).join('');
 
   // Patterns
   const patterns = [];
@@ -541,9 +486,6 @@ function renderProfileSection(profileTitle, fs) {
   if (fs.move_pattern) patterns.push(`<span class="ptag">move: ${fs.move_pattern}</span>`);
   if (fs.repeated_cost_pattern) patterns.push(`<span class="ptag">cost: ${fs.repeated_cost_pattern}</span>`);
 
-  // Contradictions
-  const contradictions = fs.contradictions || [];
-  const contradictionCount = fs.contradiction_count || contradictions.length || 0;
 
   // Wing
   const likelyWing = fs.likely_wing;
@@ -556,16 +498,7 @@ function renderProfileSection(profileTitle, fs) {
     <h3>Posterior Distribution</h3>
     <div class="posterior-bars">${posteriorBars}</div>
 
-    <h3>Behavioral Signals</h3>
-    <div class="signals-grid">${signalCards}</div>
-
     ${patterns.length > 0 ? `<h3>Patterns</h3><div class="pattern-tags">${patterns.join('')}</div>` : ''}
-
-    <h3>Contradictions</h3>
-    <div class="contradictions">
-      <div class="c-count">${contradictionCount} contradiction${contradictionCount !== 1 ? 's' : ''}</div>
-      ${contradictions.length > 0 ? `<div class="c-list">${contradictions.map(c => esc(c)).join(', ')}</div>` : ''}
-    </div>
 
     <h3>Wing</h3>
     <div class="wing-info">

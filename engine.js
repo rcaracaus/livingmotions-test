@@ -118,7 +118,9 @@ const PROBE_GUIDE = {
       { signal: 'resentment at carrying standard alone', threat: 'rightness', move: 'correct', cost: 'tension_for_rightness' }
     ],
     splitters: ['1v8', '1v6', '1v3'],
-    killer_probe: 'what they quietly resent having to fix over and over'
+    killer_probe: 'what they quietly resent having to fix over and over',
+    stress_arrow: 'under stress becomes moody and irrational like unhealthy 4',
+    core_avoidance: 'being wrong or corrupt'
   },
   2: {
     target: 'moving toward people, needing to matter, resentment after overgiving',
@@ -133,7 +135,9 @@ const PROBE_GUIDE = {
       { signal: 'connection-seeking under emotion', threat: 'connection_value', move: 'move_toward', cost: 'overgiving_for_connection' }
     ],
     splitters: ['2v3', '2v9', '2v8'],
-    killer_probe: 'what hurts more: not being loved back or not being needed'
+    killer_probe: 'what hurts more: not being loved back or not being needed',
+    stress_arrow: 'under stress becomes aggressive and controlling like unhealthy 8',
+    core_avoidance: 'being unwanted or unneeded'
   },
   3: {
     target: 'identity through performance, adaptation, traction',
@@ -148,7 +152,9 @@ const PROBE_GUIDE = {
       { signal: 'discomfort with stagnation', threat: 'image_traction', move: 'perform', cost: 'self_loss_for_image' }
     ],
     splitters: ['2v3', '3v4', '3v7'],
-    killer_probe: 'who they are when there is nothing to achieve'
+    killer_probe: 'who they are when there is nothing to achieve',
+    stress_arrow: 'under stress becomes disengaged and apathetic like unhealthy 9',
+    core_avoidance: 'being worthless or without value apart from achievements'
   },
   4: {
     target: 'meaning-rich pain, identity through feeling, depth over escape',
@@ -163,7 +169,9 @@ const PROBE_GUIDE = {
       { signal: 'precise unseen-ness', threat: 'meaning_identity', move: 'deepen', cost: 'pain_for_depth' }
     ],
     splitters: ['4v6', '4v5', '4v7'],
-    killer_probe: 'what kind of misunderstanding feels personal not just annoying'
+    killer_probe: 'what kind of misunderstanding feels personal not just annoying',
+    stress_arrow: 'under stress becomes clingy and over-involved like unhealthy 2',
+    core_avoidance: 'being ordinary or without personal significance'
   },
   5: {
     target: 'depletion, intrusion, need to understand before engaging',
@@ -178,7 +186,9 @@ const PROBE_GUIDE = {
       { signal: 'confidence through understanding', threat: 'resource_depletion', move: 'withdraw_to_understand', cost: 'distance_for_resources' }
     ],
     splitters: ['5v9', '5v6', '5v7'],
-    killer_probe: 'what kind of demand makes them disappear fastest'
+    killer_probe: 'what kind of demand makes them disappear fastest',
+    stress_arrow: 'under stress becomes scattered and hyperactive like unhealthy 7',
+    core_avoidance: 'being overwhelmed or depleted by demands'
   },
   6: {
     target: 'uncertainty, checking, testing, need for reliable footing',
@@ -193,7 +203,9 @@ const PROBE_GUIDE = {
       { signal: 'worry mixed with loyalty', threat: 'uncertainty_footing', move: 'scan_prepare', cost: 'worry_for_preparedness' }
     ],
     splitters: ['1v6', '6v9', '6v7'],
-    killer_probe: 'what they check for even when things look fine'
+    killer_probe: 'what they check for even when things look fine',
+    stress_arrow: 'under stress becomes rigid and controlling like unhealthy 3',
+    core_avoidance: 'being without support or guidance'
   },
   7: {
     target: 'escape from pain through options, movement, reframing',
@@ -208,7 +220,9 @@ const PROBE_GUIDE = {
       { signal: 'option-opening under strain', threat: 'constraint_pain', move: 'open_options', cost: 'scatter_for_freedom' }
     ],
     splitters: ['7v9', '5v7', '3v7'],
-    killer_probe: 'what kind of pain they move away from fastest'
+    killer_probe: 'what kind of pain they move away from fastest',
+    stress_arrow: 'under stress becomes critical and perfectionistic like unhealthy 1',
+    core_avoidance: 'being trapped in pain or deprivation'
   },
   8: {
     target: 'immediate force, resistance to control, hardness over softer hurt',
@@ -223,7 +237,9 @@ const PROBE_GUIDE = {
       { signal: 'hardness over exposure', threat: 'control_vulnerability', move: 'push_back', cost: 'conflict_for_autonomy' }
     ],
     splitters: ['1v8', '6v8', '2v8'],
-    killer_probe: 'what they refuse to let anyone have over them'
+    killer_probe: 'what they refuse to let anyone have over them',
+    stress_arrow: 'under stress becomes secretive and withdrawn like unhealthy 5',
+    core_avoidance: 'being controlled or vulnerable'
   },
   9: {
     target: 'self-forgetting, comfort as anesthesia, loss of own position',
@@ -238,7 +254,9 @@ const PROBE_GUIDE = {
       { signal: 'loss of own priority', threat: 'peace_disruption', move: 'settle_numb', cost: 'self_erasure_for_peace' }
     ],
     splitters: ['5v9', '7v9', '2v9'],
-    killer_probe: 'what they lose track of in themselves when things get tense'
+    killer_probe: 'what they lose track of in themselves when things get tense',
+    stress_arrow: 'under stress becomes anxious and suspicious like unhealthy 6',
+    core_avoidance: 'conflict and disconnection from others'
   }
 };
 
@@ -272,21 +290,12 @@ function createState(sessionId, name) {
     session_id: sessionId,
     name: name,
     question_number: 0,
-    phase: 'calibration',
+    phase: 'broad_discrimination',
     budget_total: 25,
     budget_remaining: 25,
 
     // Type posterior (percentages, sum to ~100)
     posterior,
-
-    // Behavioral signals
-    behavioral: {
-      anger_awareness: { value: null, confidence: 0 },
-      pressure_stance: { value: null, confidence: 0 },
-      good_day_anchor: { value: null, confidence: 0 },
-      hurt_response: { value: null, confidence: 0 },
-      no_demand_pattern: { value: null, confidence: 0 }
-    },
 
     // Pattern inference
     threat_pattern: null,
@@ -305,14 +314,14 @@ function createState(sessionId, name) {
     wing_confidence: 0,
 
     // Guards
-    contradiction_count: 0,
-    contradictions: [],
     late_confirmation_failed: false,
     repair_mode: false,
 
     // Coverage tracking
     types_tested: [],
+    type_signal_counts: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 },
     pairs_tested: [],
+    pair_question_counts: {},
     domains_used: [],
     same_type_family_streak: 0,
     last_type_family: null,
@@ -323,7 +332,7 @@ function createState(sessionId, name) {
     // Rephrase tracking
     rephrase_due_at: null,
     rephrase_targets: [],
-    next_rephrase_question: 13, // first rephrase around Q13
+    next_rephrase_question: 15, // first rephrase around Q15
 
     // Derived (recomputed each turn)
     top_type: null,
@@ -339,16 +348,16 @@ function createState(sessionId, name) {
 function updatePhase(state) {
   const q = state.question_number;
 
-  if (q <= 5) {
-    state.phase = 'calibration';
-  } else if (q <= 16) {
+  if (q <= 12) {
     // Broad discrimination until untested types are low enough, then pair work
-    if (state.untested_types_count <= 3 && q >= 10) {
+    if (state.untested_types_count <= 3 && q >= 8) {
       state.phase = 'pair_work';
     } else {
       state.phase = 'broad_discrimination';
     }
-  } else if (q <= 21) {
+  } else if (q <= 19) {
+    state.phase = 'pair_work';
+  } else if (q <= 23) {
     state.phase = 'repair';
   } else {
     state.phase = 'approval';
@@ -385,24 +394,8 @@ function recomputeDerived(state) {
 // ─── Calibration ────────────────────────────────────────────────────
 
 function applyCalibration(state, calibrationAnswers) {
-  // Calibration ONLY sets behavioral signals. Posterior stays flat.
-  for (const answer of calibrationAnswers) {
-    const dim = answer.dimension;
-    if (state.behavioral[dim]) {
-      const signal = answer.signal;
-      const chosenPole = answer.picked === 'a' ? 'pole_a' : 'pole_b';
-      // Determine the value based on which pole was chosen
-      let value = null;
-      if (dim === 'anger_awareness') value = chosenPole === 'pole_a' ? 'immediate' : 'delayed';
-      if (dim === 'pressure_stance') value = chosenPole === 'pole_a' ? 'ease_back' : 'engage';
-      if (dim === 'good_day_anchor') value = chosenPole === 'pole_a' ? 'performance' : 'relational';
-      if (dim === 'hurt_response') value = chosenPole === 'pole_a' ? 'containment' : 'contact_seeking';
-      if (dim === 'no_demand_pattern') value = chosenPole === 'pole_a' ? 'settling' : 'inquiry';
-
-      state.behavioral[dim] = { value, confidence: 55 }; // weak initial confidence
-    }
-  }
-
+  // Calibration is no longer used for behavioral signals (dropped).
+  // Just advance the question number past static questions.
   state.question_number = 5;
   state.budget_remaining = 20;
   recomputeDerived(state);
@@ -421,41 +414,69 @@ function applyAnswerToScores(state, pick) {
   const favored = pick === 'a' ? lastQ.predicted_signal_a : lastQ.predicted_signal_b;
   const unfavored = pick === 'a' ? lastQ.predicted_signal_b : lastQ.predicted_signal_a;
 
-  if (favored && favored.length > 0) {
-    for (const type of favored) {
-      state.posterior[type] = Math.min(99, state.posterior[type] + BOOST_AMOUNT);
-      if (!state.types_tested.includes(type)) state.types_tested.push(type);
+  // Handle both array [1,6] and weighted object {1: 1.0, 6: 0.4} formats
+  // Cap total weight per option to prevent broad cuts from overwhelming pair questions
+  const MAX_TOTAL_WEIGHT = 2.0;
+
+  function applySignals(signals, baseAmount) {
+    if (!signals) return;
+    if (Array.isArray(signals)) {
+      // Legacy array format: weight 1.0 for each type, apply cap
+      const count = signals.length;
+      const totalWeight = count; // each is 1.0
+      const scale = totalWeight > MAX_TOTAL_WEIGHT ? MAX_TOTAL_WEIGHT / totalWeight : 1;
+      for (const type of signals) {
+        const t = parseInt(type);
+        const adj = baseAmount * scale;
+        state.posterior[t] = adj > 0
+          ? Math.min(99, state.posterior[t] + adj)
+          : Math.max(0, state.posterior[t] + adj);
+        if (!state.types_tested.includes(t)) state.types_tested.push(t);
+      }
+    } else if (typeof signals === 'object') {
+      // Weighted object format: {type: weight}
+      const entries = Object.entries(signals);
+      const totalWeight = entries.reduce((s, [, w]) => s + w, 0);
+      const scale = totalWeight > MAX_TOTAL_WEIGHT ? MAX_TOTAL_WEIGHT / totalWeight : 1;
+      for (const [type, weight] of entries) {
+        const t = parseInt(type);
+        const adj = baseAmount * weight * scale;
+        state.posterior[t] = adj > 0
+          ? Math.min(99, state.posterior[t] + adj)
+          : Math.max(0, state.posterior[t] + adj);
+        if (!state.types_tested.includes(t)) state.types_tested.push(t);
+      }
     }
   }
-  if (unfavored && unfavored.length > 0) {
-    for (const type of unfavored) {
-      state.posterior[type] = Math.max(0, state.posterior[type] - LOWER_AMOUNT);
-      if (!state.types_tested.includes(type)) state.types_tested.push(type);
+
+  applySignals(favored, BOOST_AMOUNT);
+  applySignals(unfavored, -LOWER_AMOUNT);
+
+  // Track how many times each type has been touched by any signal
+  function countSignalTouches(signals) {
+    if (!signals) return;
+    const entries = Array.isArray(signals) ? signals.map(t => [t, 1]) : Object.entries(signals);
+    for (const [type] of entries) {
+      const t = parseInt(type);
+      if (state.type_signal_counts[t] !== undefined) {
+        state.type_signal_counts[t]++;
+      }
     }
   }
+  countSignalTouches(favored);
+  countSignalTouches(unfavored);
 
   // Normalize, enforce floor, recompute
   normalizePosterior(state);
   enforceFloor(state);
-  updateContradictions(state);
   recomputeDerived(state);
 }
 
-// ─── Router Update (patterns + behavioral only, NOT type scores) ────
+// ─── Router Update (patterns only, NOT type scores) ─────────────────
 
 function applyRouterUpdate(state, update) {
   // Router is NO LONGER allowed to move type probabilities.
   // Type scores are moved deterministically by applyAnswerToScores.
-
-  // Apply behavioral signal updates (router can still interpret these)
-  if (update.behavioral_updates) {
-    for (const [dim, reading] of Object.entries(update.behavioral_updates)) {
-      if (state.behavioral[dim]) {
-        if (reading.value) state.behavioral[dim].value = reading.value;
-        if (reading.confidence) state.behavioral[dim].confidence = Math.max(state.behavioral[dim].confidence, reading.confidence);
-      }
-    }
-  }
 
   // Apply pattern inference
   if (update.threat_pattern) state.threat_pattern = update.threat_pattern;
@@ -477,9 +498,6 @@ function applyRouterUpdate(state, update) {
   // Enforce floor rule
   enforceFloor(state);
 
-  // Recompute contradictions
-  updateContradictions(state);
-
   // Check cost-pattern conflict
   checkCostConflict(state);
 
@@ -499,9 +517,9 @@ function normalizePosterior(state) {
 }
 
 function enforceFloor(state) {
-  if (state.question_number >= 10) return; // floor only before Q10
+  if (state.question_number >= 15) return; // floor active through mid-game
 
-  const FLOOR = 3;
+  const FLOOR = 2;
   let deficit = 0;
   let aboveFloor = [];
 
@@ -530,20 +548,9 @@ function enforceFloor(state) {
 // ─── Contradiction Checking ─────────────────────────────────────────
 
 function updateContradictions(state) {
-  const topType = state.top_type || TYPES.reduce((best, t) =>
-    state.posterior[t] > state.posterior[best] ? t : best, 1);
-
-  const expected = TYPE_PROFILES[topType];
-  if (!expected) return;
-
-  const dims = ['anger_awareness', 'pressure_stance', 'good_day_anchor', 'hurt_response', 'no_demand_pattern'];
-  const contradictions = dims.filter(d => {
-    const val = state.behavioral[d]?.value;
-    return val && expected[d] && val !== expected[d] && state.behavioral[d].confidence >= 50;
-  });
-
-  state.contradictions = contradictions;
-  state.contradiction_count = contradictions.length;
+  // No-op: behavioral signal contradiction detection has been removed.
+  // Behavioral signals were dropped because calibration was removed
+  // and they created false contradictions.
 }
 
 // ─── Cost-Pattern Conflict ──────────────────────────────────────────
@@ -591,23 +598,17 @@ function checkDoneGates(state) {
   if (state.wing_confidence < 60)
     failures.push({ gate: 'wing_confidence', msg: `wing confidence at ${state.wing_confidence}%, needs >= 60` });
 
-  // Gate 4: behavioral signal coverage
-  const dims = ['anger_awareness', 'pressure_stance', 'good_day_anchor', 'hurt_response', 'no_demand_pattern'];
-  const strongSignals = dims.filter(d => (state.behavioral[d]?.confidence || 0) >= 55).length;
-  if (strongSignals < 4)
-    failures.push({ gate: 'behavioral_coverage', msg: `${strongSignals}/5 signals >= 55 confidence, needs 4` });
+  // Gate 4: (removed — no calibration phase)
 
-  // Gate 5: no 2+ contradictions
-  if (state.contradiction_count >= 2)
-    failures.push({ gate: 'contradictions', msg: `${state.contradiction_count} behavioral contradictions` });
+  // Gate 5: (removed — behavioral contradiction detection dropped)
 
   // Gate 6: if lookalike pair was active, must be resolved
   if (state.target_pair && !state.pair_resolved && state.target_pair_questions < 2)
     failures.push({ gate: 'pair_unresolved', msg: `pair ${state.target_pair} not resolved (${state.target_pair_questions} questions)` });
 
   // Gate 7: minimum questions
-  if (state.question_number < 12)
-    failures.push({ gate: 'min_questions', msg: `only ${state.question_number} questions, minimum 12` });
+  if (state.question_number < 15)
+    failures.push({ gate: 'min_questions', msg: `only ${state.question_number} questions, minimum 15` });
 
   // Gate 9: same-triad pairs must be tested
   const requiredTriadPairs = getRequiredTriadPairs(state);
@@ -627,6 +628,8 @@ function checkDoneGates(state) {
 
 // ─── Routing Helpers ────────────────────────────────────────────────
 
+const PAIR_CAP = 3; // max questions per pair
+
 function getRoutingConstraints(state) {
   const constraints = {
     phase: state.phase,
@@ -634,7 +637,9 @@ function getRoutingConstraints(state) {
     budget_remaining: state.budget_remaining,
     must_avoid_domains: [],
     rephrase_required: false,
-    tunnel_blocked: false
+    tunnel_blocked: false,
+    capped_pairs: [],
+    inconsistent_pairs: []
   };
 
   // Avoid domain repetition (last 2 questions)
@@ -652,12 +657,34 @@ function getRoutingConstraints(state) {
   }
 
   // Anti-tunnel trigger
-  if (state.untested_types_count >= 4 && state.question_number >= 8) {
+  if (state.untested_types_count >= 4 && state.question_number >= 6) {
     constraints.force_broad = true;
   }
 
-  // Triad pair forcing — after Q8, if same-triad types haven't been pair-tested, force them
-  if (state.question_number >= 8 && !constraints.force_broad) {
+  // PAIR CAP: max 3 questions per pair
+  for (const [pair, count] of Object.entries(state.pair_question_counts)) {
+    if (count >= PAIR_CAP) {
+      constraints.capped_pairs.push(pair);
+    }
+  }
+
+  // INCONSISTENCY DETECTION: if 3 questions on a pair with mixed results, flag it
+  for (const [pair, count] of Object.entries(state.pair_question_counts)) {
+    if (count >= PAIR_CAP) {
+      const pairQs = state.question_history.filter(q => {
+        if (!q.pair || !q.picked) return false;
+        return getPairKey(...q.pair.split('v').map(Number)) === pair;
+      });
+      const pickedA = pairQs.filter(q => q.picked === 'a').length;
+      const pickedB = pairQs.filter(q => q.picked === 'b').length;
+      if (Math.min(pickedA, pickedB) >= 1) {
+        constraints.inconsistent_pairs.push({ pair, split: `${pickedA}-${pickedB}` });
+      }
+    }
+  }
+
+  // Triad pair forcing — after Q6, if same-triad types haven't been pair-tested, force them
+  if (state.question_number >= 6 && !constraints.force_broad) {
     const requiredTriadPairs = getRequiredTriadPairs(state);
     if (requiredTriadPairs.length > 0) {
       // Pick the most urgent: highest posterior peer first
@@ -751,7 +778,7 @@ function derivePairSignals(pair) {
   const typeA = parseInt(match[1]);
   const typeB = parseInt(match[2]);
   if (!PAIR_AXES[pair]) return null;
-  return { signal_a: [typeA], signal_b: [typeB] };
+  return { signal_a: { [typeA]: 1.0 }, signal_b: { [typeB]: 1.0 } };
 }
 
 // ─── Record Question ────────────────────────────────────────────────
@@ -760,10 +787,35 @@ function recordQuestion(state, questionData) {
   state.question_number++;
   state.budget_remaining--;
 
-  // For pair questions, override LLM signals with known pair types
+  // For pair questions, ensure primary pair types are at weight 1.0
+  // but merge in writer's secondary type signals
   const pairSignals = derivePairSignals(questionData.pair);
-  const signal_a = pairSignals ? pairSignals.signal_a : (questionData.predicted_signal_a || []);
-  const signal_b = pairSignals ? pairSignals.signal_b : (questionData.predicted_signal_b || []);
+  let signal_a, signal_b;
+
+  if (pairSignals) {
+    // Start with pair primary signals
+    signal_a = { ...pairSignals.signal_a };
+    signal_b = { ...pairSignals.signal_b };
+
+    // Merge writer's secondary signals (don't override primary pair types)
+    const writerA = questionData.predicted_signal_a || {};
+    const writerB = questionData.predicted_signal_b || {};
+
+    if (typeof writerA === 'object' && !Array.isArray(writerA)) {
+      for (const [type, weight] of Object.entries(writerA)) {
+        if (!(type in signal_a)) signal_a[type] = weight;
+      }
+    }
+    if (typeof writerB === 'object' && !Array.isArray(writerB)) {
+      for (const [type, weight] of Object.entries(writerB)) {
+        if (!(type in signal_b)) signal_b[type] = weight;
+      }
+    }
+  } else {
+    // Non-pair question (broad cut) — use writer's signals directly
+    signal_a = questionData.predicted_signal_a || {};
+    signal_b = questionData.predicted_signal_b || {};
+  }
 
   state.question_history.push({
     question_number: state.question_number,
@@ -779,8 +831,13 @@ function recordQuestion(state, questionData) {
   });
 
   // Track pair coverage
-  if (questionData.pair && !state.pairs_tested.includes(questionData.pair)) {
-    state.pairs_tested.push(questionData.pair);
+  if (questionData.pair) {
+    if (!state.pairs_tested.includes(questionData.pair)) {
+      state.pairs_tested.push(questionData.pair);
+    }
+    // Track per-pair question counts
+    const normalizedPair = getPairKey(...questionData.pair.split('v').map(Number));
+    state.pair_question_counts[normalizedPair] = (state.pair_question_counts[normalizedPair] || 0) + 1;
   }
 
   // Track domain usage
@@ -925,7 +982,8 @@ function buildStateSummary(state) {
     second_type: state.second_type,
     top_two_gap: Math.round(state.top_two_gap),
     untested_types: getUntestedTypes(state),
-    behavioral: state.behavioral,
+    neglected_types: TYPES.filter(t => state.type_signal_counts[t] <= 1),
+    type_signal_counts: state.type_signal_counts,
     threat_pattern: state.threat_pattern,
     move_pattern: state.move_pattern,
     repeated_cost_pattern: state.repeated_cost_pattern,
@@ -935,8 +993,6 @@ function buildStateSummary(state) {
     pair_resolved: state.pair_resolved,
     likely_wing: state.likely_wing,
     wing_confidence: state.wing_confidence,
-    contradiction_count: state.contradiction_count,
-    contradictions: state.contradictions,
     repair_mode: state.repair_mode,
     recent_questions: state.question_history.slice(-3).map(q => ({
       pair: q.pair,
@@ -944,6 +1000,8 @@ function buildStateSummary(state) {
       picked: q.picked
     })),
     pairs_tested: state.pairs_tested,
+    pair_question_counts: state.pair_question_counts,
+    capped_pairs: Object.entries(state.pair_question_counts).filter(([,c]) => c >= PAIR_CAP).map(([p]) => p),
     domains_used_recently: state.domains_used.slice(-3),
     same_type_family_streak: state.same_type_family_streak,
     required_triad_pairs: getRequiredTriadPairs(state),
